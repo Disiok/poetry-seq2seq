@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 from utils import *
+import struct
 
 
 py_raw = os.path.join(raw_dir, 'pinyin.txt')
@@ -54,13 +55,19 @@ def _get_rhyme(pinyin):
     else:
         return 0
 
+def unichar(i):
+    try:
+        return unichr(i)
+    except ValueError:
+        return struct.pack('i', i).decode('utf-32')
+
 def _gen_rhy_dict():
     ch2rhy = dict()
     with codecs.open(py_raw, 'r', 'utf-8') as fin:
         line = fin.readline()
         while line:
             toks = filter(lambda x: len(x) > 0, line.strip().split(' '))
-            ch = unichr(int(toks[0], 16))
+            ch = unichar(int(toks[0], 16))
             if is_CN_char(ch):
                 ch2rhy[ch] = (toks[1][:-1], int(toks[1][-1]))
             line = fin.readline()
