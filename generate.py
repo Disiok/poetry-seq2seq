@@ -9,6 +9,7 @@ from data_utils import *
 from collections import deque
 import tensorflow as tf
 from tensorflow.contrib import rnn
+from IPython import embed
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -81,6 +82,7 @@ class Generator:
             self.saver.restore(sess, ckpt.model_checkpoint_path)
 
     def _train_a_batch(self, sess, kw_mats, kw_lens, s_mats, s_lens):
+        embed()
         total_loss = 0
         for idx in range(4):
             encoder_feed_dict = {self.encoder_inputs: kw_mats[idx],
@@ -186,16 +188,20 @@ class Generator:
                         sentence += ch
                         decoder_inputs[0,0] = self.ch2int[ch]
                         i += 1
-                #uprintln(sentence)
                 sentences.append(sentence)
         return sentences
 
 
 if __name__ == '__main__':
     generator = Generator()
+    counter = 0
     kw_train_data = get_kw_train_data()
-    for row in kw_train_data[100:]:
-        uprintln(row)
-        generator.generate(row)
-        print
+    train_data = get_train_data()
+    for keywords in kw_train_data[:10]:
+        uprintln(keywords)
+        sentences = generator.generate(keywords)
+        uprintln(sentences)
+        for i in range(4):
+            uprintln(train_data[counter + i])
+        counter += 4
 
