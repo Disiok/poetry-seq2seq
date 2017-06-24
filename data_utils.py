@@ -6,6 +6,8 @@ from segment import Segmenter
 from vocab import *
 from cnt_words import get_pop_quatrains
 from rank_words import get_word_ranks
+from utils import embed_w2v
+from word2vec import get_word_embedding
 import numpy as np
 import shutil
 import random
@@ -92,13 +94,30 @@ def get_keras_train_data():
         current_sentence = train_data[idx]['sentence']
         previous_sentences = ''.join([train_data[idx - i]['sentence'] for i in range(line_number, 0, -1)])
         
-        X_entry = pad_to([ch2int[ch] for ch in (keyword + previous_sentences)], 25, 5999)
-        Y_entry = pad_to([ch2int[ch] for ch in current_sentence], 10, 5999)
+        X_entry = pad_to([ch2int[ch] for ch in (keyword + previous_sentences)], 26, 5999)
+        Y_entry = pad_to([ch2int[ch] for ch in current_sentence], 8, 5999)
         
         X_train.append(X_entry)
         Y_train.append(Y_entry)
         
     return X_train, Y_train
+
+def gen_keras_train_data(batch_size=64):
+    print 'Preparing data'
+    embedding = get_word_embedding(128)
+    X_train, Y_train = get_keras_train_data()
+
+    X_train_embedded = embed_w2v(embedding, X_train)
+    Y_train_embedded = embed_w2v(embedding, Y_train)
+
+
+    print 'Data preparation completed'
+    i = 0 
+    while i < len(X_train_embedded):
+
+        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_embedded[i: i + batch_size])
+
+        i += batch_size
 
 
 def get_kw_train_data():

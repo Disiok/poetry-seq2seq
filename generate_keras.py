@@ -21,8 +21,8 @@ from recurrentshop import RecurrentSequential
 from vocab import get_vocab
 from data_utils import get_train_data
 from word2vec import get_word_embedding, _w2v_model_path
-from utils import pad_to, embed, save_dir
-from data_utils import get_keras_train_data
+from utils import pad_to, save_dir, log_dir
+from data_utils import gen_keras_train_data
 
 # logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -34,8 +34,8 @@ _VOCAB_SIZE = 6000
 _WORD_DIM = 128
 _MODEL_DEPTH = 4
 
-_INPUT_LENGTH = 25
-_OUTPUT_LENGTH = 10
+_INPUT_LENGTH = 26
+_OUTPUT_LENGTH = 8
 
 _N_EPOCHS = 6
 _LEARN_RATE = 0.002
@@ -68,18 +68,16 @@ class Generator:
               decay_rate = _DECAY_RATE):
 
         # prepare callbacks
-        tensorboard_callback = TensorBoard(log_dir='log')
-        # earlystopping_callback = EarlyStopping()
+        tensorboard_callback = TensorBoard(log_dir=log_dir)
         modelcheckpoint_callback = ModelCheckpoint(filepath=_model_path, verbose=1, save_weights_only=True)
 
-        # prepare data
-        X_train, Y_train = get_keras_train_data()
-        X_train_embedded = embed(self.embedding, X_train)[:100]
-        Y_train_embedded = embed(self.embedding, Y_train)[:100]
-
         # train
-        self.model.fit(X_train_embedded, Y_train_embedded, epochs=_N_EPOCHS, verbose=1,
-                callbacks=[tensorboard_callback, modelcheckpoint_callback])
+        print 'Start training.'
+        self.model.fit_generator(gen_keras_train_data(), 
+                                 steps_per_epoch = 100,
+                                 epochs=_N_EPOCHS, 
+                                 verbose=1, 
+                                 callbacks=[tensorboard_callback, modelcheckpoint_callback])
 
     def generate(self, keywords):
         previous_sentences = ''
@@ -97,9 +95,9 @@ class Generator:
 
             # prepare output
             output_list = map(lambda word_vec: self.w2v_model.most_similar(positive=[word_vec], topn=1)[0][0], 
-                            output_embedded[0])
+                              output_embedded[0])
             output_ch = ''.join(output_list)
-            previous_sentences += output_ch[:7]
+            previous_sentences += output_ch
 
             outputs.append(output_ch)
 
