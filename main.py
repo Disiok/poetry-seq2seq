@@ -3,7 +3,7 @@
 
 from data_utils import *
 from plan import Planner
-from generate import Generator
+from generate_keras import Generator
 import sys
 
 

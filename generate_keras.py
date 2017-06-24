@@ -11,8 +11,10 @@ import os.path
 
 # frameworks
 from keras.models import load_model
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from frameworks.seq2seq_keras.models import AttentionSeq2Seq
 from gensim.models import Word2Vec
+from recurrentshop import RecurrentSequential
 
 
 # custom
@@ -48,31 +50,35 @@ class Generator:
         self.w2v_model = Word2Vec.load(_w2v_model_path)
         self.embedding = get_word_embedding(_WORD_DIM)
 
+        self.model = AttentionSeq2Seq(input_length=_INPUT_LENGTH, 
+                                      input_dim=_WORD_DIM, 
+                                      hidden_dim=_WORD_DIM, 
+                                      output_length=_OUTPUT_LENGTH, 
+                                      output_dim=_WORD_DIM, 
+                                      depth=_MODEL_DEPTH)
+        self.model.compile(loss='mse', optimizer='rmsprop')
+            
         if os.path.exists(_model_path):
-            self.model = load_model(_model_path)
-        else:
-            self.model = AttentionSeq2Seq(input_length=_INPUT_LENGTH, 
-                                          input_dim=_WORD_DIM, 
-                                          hidden_dim=_WORD_DIM, 
-                                          output_length=_OUTPUT_LENGTH, 
-                                          output_dim=_WORD_DIM, 
-                                          depth=_MODEL_DEPTH)
-            self.model.compile(loss='mse', optimizer='rmsprop')
+            self.model.load_weights(_model_path)
    
     def train(self, 
               n_epochs = _N_EPOCHS, 
               learn_rate = _LEARN_RATE, 
               decay_rate = _DECAY_RATE):
 
+        # prepare callbacks
+        tensorboard_callback = TensorBoard(log_dir='log')
+        # earlystopping_callback = EarlyStopping()
+        modelcheckpoint_callback = ModelCheckpoint(filepath=_model_path, verbose=1, save_weights_only=True)
+
         # prepare data
         X_train, Y_train = get_keras_train_data()
-        X_train_embedded = embed(self.embedding, X_train)
-        Y_train_embedded = embed(self.embedding, Y_train)
+        X_train_embedded = embed(self.embedding, X_train)[:100]
+        Y_train_embedded = embed(self.embedding, Y_train)[:100]
 
         # train
-        self.model.fit(X_train_embedded, Y_train_embedded, epochs=_N_EPOCHS, verbose=1)
-
-        self.model.save(_model_path)
+        self.model.fit(X_train_embedded, Y_train_embedded, epochs=_N_EPOCHS, verbose=1,
+                callbacks=[tensorboard_callback, modelcheckpoint_callback])
 
     def generate(self, keywords):
         previous_sentences = ''

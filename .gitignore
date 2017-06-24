@@ -2,4 +2,5 @@
 show.py
 data/
 save/
+log/
 .backup/
