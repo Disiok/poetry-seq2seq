@@ -12,7 +12,6 @@ import random
 
 
 train_path = os.path.join(data_dir, 'train.txt')
-
 kw_train_path = os.path.join(data_dir, 'kw_train.txt')
 
 
@@ -22,6 +21,7 @@ def fill_np_matrix(vects, batch_size, dummy):
     for row, vect in enumerate(vects):
         res[row, :len(vect)] = vect
     return res
+
 
 def fill_np_array(vect, batch_size, dummy):
     res = np.full([batch_size], dummy, dtype = np.int32)
@@ -78,6 +78,28 @@ def get_train_data():
             data.append({'sentence':toks[0], 'keyword':toks[1]})
             line = fin.readline()
     return data
+
+def get_keras_train_data():
+    train_data = get_train_data()
+    _, ch2int = get_vocab()
+    
+    X_train = []
+    Y_train = []
+    for idx in xrange(len(train_data)):
+        line_number = idx % 4
+        
+        keyword = train_data[idx]['keyword']
+        current_sentence = train_data[idx]['sentence']
+        previous_sentences = ''.join([train_data[idx - i]['sentence'] for i in range(line_number, 0, -1)])
+        
+        X_entry = pad_to([ch2int[ch] for ch in (keyword + previous_sentences)], 25, 5999)
+        Y_entry = pad_to([ch2int[ch] for ch in current_sentence], 10, 5999)
+        
+        X_train.append(X_entry)
+        Y_train.append(Y_entry)
+        
+    return X_train, Y_train
+
 
 def get_kw_train_data():
     if not os.path.exists(kw_train_path):

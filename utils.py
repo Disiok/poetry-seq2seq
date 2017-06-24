@@ -18,6 +18,16 @@ if not os.path.exists(data_dir):
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
+def embed(embedding, data_set):
+    embedded = [map(lambda x: embedding[x], sample) for sample in data_set]
+
+    return embedded
+
+def pad_to(lst, length, value):
+    for i in range(len(lst), length):
+        lst.append(value)
+    
+    return lst
 
 def uprint(x):
     print repr(x).decode('unicode-escape'),

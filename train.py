@@ -3,7 +3,7 @@
 
 from utils import *
 from data_utils import *
-from generate import Generator
+from generate_keras import Generator
 from time import sleep
 
 
