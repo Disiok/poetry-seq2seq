@@ -95,14 +95,14 @@ class Generator:
             output_embedded = self.model.predict(input_embedded_array)
 
             # prepare output
-            output_list = map(lambda word_vec: self.w2v_model.most_similar(positive=word_vec, topn=1), 
+            output_list = map(lambda word_vec: self.w2v_model.most_similar(positive=[word_vec], topn=1)[0][0], 
                             output_embedded[0])
-            output_ch = ''.join(output_ch)
-
+            output_ch = ''.join(output_list)
             previous_sentences += output_ch
+
             outputs.append(output_ch)
 
-            return outputs
+        return outputs
 
 if __name__ == '__main__':
     generator = Generator()
