@@ -11,6 +11,8 @@ import os.path
 
 # frameworks
 from keras.models import load_model
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from frameworks.seq2seq_keras.models import AttentionSeq2Seq
 from gensim.models import Word2Vec
@@ -23,6 +25,7 @@ from data_utils import get_train_data
 from word2vec import get_word_embedding, _w2v_model_path
 from utils import pad_to, save_dir, log_dir
 from data_utils import gen_keras_train_data
+
 
 # logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -42,6 +45,12 @@ _LEARN_RATE = 0.002
 _DECAY_RATE = 0.97
 
 _model_path = os.path.join(save_dir, 'keras_model.h5')
+
+
+# limit memory use
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.25
+set_session(tf.Session(config=config))
 
 
 class Generator:
