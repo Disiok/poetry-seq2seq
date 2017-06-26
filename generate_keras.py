@@ -33,6 +33,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # default configs
 _BATCH_SIZE = 64
+_N_BATCHES = 625
 _VOCAB_SIZE = 6000
 _WORD_DIM = 128
 _MODEL_DEPTH = 4
@@ -83,7 +84,7 @@ class Generator:
         # train
         print 'Start training.'
         self.model.fit_generator(gen_keras_train_data(), 
-                                 steps_per_epoch = 100,
+                                 steps_per_epoch = _N_BATCHES,
                                  epochs=_N_EPOCHS, 
                                  verbose=1, 
                                  callbacks=[tensorboard_callback, modelcheckpoint_callback])

@@ -110,14 +110,19 @@ def gen_keras_train_data(batch_size=64):
     X_train_embedded = embed_w2v(embedding, X_train)
     Y_train_embedded = embed_w2v(embedding, Y_train)
 
+    n_samples = len(X_train)
+
 
     print 'Data preparation completed'
     i = 0 
-    while i < len(X_train_embedded):
+    while True:
 
         yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_embedded[i: i + batch_size])
 
-        i += batch_size
+        if i + batch_size > n_samples:
+            i = 0
+        else:
+            i += batch_size
 
 
 def get_kw_train_data():
