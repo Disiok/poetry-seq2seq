@@ -7,7 +7,9 @@ import os
 import json
 import random
 import numpy as np
+from keras.utils.np_utils import to_categorical
 
+VOCAB_SIZE = 6000
 
 raw_dir = 'raw'
 data_dir = 'data'
@@ -22,6 +24,10 @@ if not os.path.exists(save_dir):
 def embed_w2v(embedding, data_set):
     embedded = [map(lambda x: embedding[x], sample) for sample in data_set]
     return embedded
+
+def apply_one_hot(data_set):
+    applied = [map(lambda x: to_categorical(x, num_classes=VOCAB_SIZE), sample) for sample in data_set]
+    return applied
 
 def pad_to(lst, length, value):
     for i in range(len(lst), length):

@@ -66,7 +66,7 @@ class Generator:
                                       output_length=_OUTPUT_LENGTH, 
                                       output_dim=_WORD_DIM, 
                                       depth=_MODEL_DEPTH)
-        self.model.compile(loss='mse', optimizer='rmsprop')
+        self.model.compile(loss='sparse_categorical_crossentropy', optimizer='rmsprop')
             
         if os.path.exists(_model_path):
             print 'Model exists, loading.'
@@ -83,7 +83,7 @@ class Generator:
 
         # train
         print 'Start training.'
-        self.model.fit_generator(gen_keras_train_data(), 
+        self.model.fit_generator(gen_keras_one_hot_train_data(), 
                                  steps_per_epoch = _N_BATCHES,
                                  epochs=_N_EPOCHS, 
                                  verbose=1, 
