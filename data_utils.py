@@ -117,7 +117,7 @@ def gen_keras_one_hot_train_data(batch_size=64):
     i = 0 
     while True:
 
-        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_embedded[i: i + batch_size])
+        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_one_hot[i: i + batch_size])
 
         if i + batch_size > n_samples:
             i = 0

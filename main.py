@@ -13,7 +13,7 @@ sys.setdefaultencoding('utf8')
 
 if __name__ == '__main__':
     planner = Planner()
-    generator = Generator()
+    generator = CategoricalGenerator()
     while True:
         line = raw_input('Input Text:\t').decode('utf-8').strip()
         if line.lower() == 'quit' or line.lower() == 'exit':
