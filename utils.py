@@ -29,6 +29,10 @@ def apply_one_hot(data_set):
     applied = [map(lambda x: to_categorical(x, num_classes=VOCAB_SIZE)[0], sample) for sample in data_set]
     return applied
 
+def apply_sparse(data_set):
+    applied = [map(lambda x: [x], sample) for sample in data_set]
+    return applied
+
 def pad_to(lst, length, value):
     for i in range(len(lst), length):
         lst.append(value)

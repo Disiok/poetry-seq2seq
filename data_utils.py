@@ -125,6 +125,29 @@ def gen_keras_one_hot_train_data(batch_size=64):
             i += batch_size
 
 
+def gen_keras_sparse_train_data(batch_size=64):
+    print 'Preparing data'
+    embedding = get_word_embedding(128)
+    X_train, Y_train = get_keras_train_data()
+
+    X_train_embedded = embed_w2v(embedding, X_train)
+    Y_train_one_hot = apply_sparse(Y_train)
+
+    n_samples = len(X_train)
+
+
+    print 'Data preparation completed'
+    i = 0 
+    while True:
+
+        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_one_hot[i: i + batch_size])
+
+        if i + batch_size > n_samples:
+            i = 0
+        else:
+            i += batch_size
+
+
 def gen_keras_train_data(batch_size=64):
     print 'Preparing data'
     embedding = get_word_embedding(128)

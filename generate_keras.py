@@ -24,7 +24,7 @@ from vocab import get_vocab
 from data_utils import get_train_data
 from word2vec import get_word_embedding, _w2v_model_path
 from utils import pad_to, save_dir, log_dir
-from data_utils import gen_keras_one_hot_train_data
+from data_utils import gen_keras_sparse_train_data
 
 
 # logging
@@ -145,7 +145,7 @@ class CategoricalGenerator:
 
         # train
         print 'Start training.'
-        self.model.fit_generator(gen_keras_one_hot_train_data(), 
+        self.model.fit_generator(gen_keras_sparse_train_data(), 
                                  steps_per_epoch = _N_BATCHES,
                                  epochs=_N_EPOCHS, 
                                  verbose=1, 
