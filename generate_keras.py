@@ -115,6 +115,7 @@ class MSEGenerator:
 
         return outputs
 
+
 class CategoricalGenerator:
     def __init__(self):
         _, self.ch2int = get_vocab()
@@ -153,24 +154,24 @@ class CategoricalGenerator:
     def generate(self, keywords):
         previous_sentences = ''
         outputs = []
-        for index, keyword in enumerate(keywords):
-            # prepare input
-            input_ch = keyword + previous_sentences 
-            input_int = [self.ch2int[ch] for ch in input_ch]
-            input_int_pad = pad_to(input_int, _INPUT_LENGTH, _VOCAB_SIZE - 1)
-            input_embedded = [map(lambda x: self.embedding[x], input_int_pad)]
-            input_embedded_array = np.array(input_embedded)
+        # for index, keyword in enumerate(keywords):
+        #     # prepare input
+        #     input_ch = keyword + previous_sentences 
+        #     input_int = [self.ch2int[ch] for ch in input_ch]
+        #     input_int_pad = pad_to(input_int, _INPUT_LENGTH, _VOCAB_SIZE - 1)
+        #     input_embedded = [map(lambda x: self.embedding[x], input_int_pad)]
+        #     input_embedded_array = np.array(input_embedded)
 
-            # predict
-            output_embedded = self.model.predict(input_embedded_array)
+        #     # predict
+        #     output_embedded = self.model.predict(input_embedded_array)
 
-            # prepare output
-            output_list = map(lambda word_vec: self.w2v_model.most_similar(positive=[word_vec], topn=1)[0][0], 
-                              output_embedded[0])
-            output_ch = ''.join(output_list)
-            previous_sentences += output_ch
+        #     # prepare output
+        #     output_list = map(lambda word_vec: self.w2v_model.most_similar(positive=[word_vec], topn=1)[0][0], 
+        #                       output_embedded[0])
+        #     output_ch = ''.join(output_list)
+        #     previous_sentences += output_ch
 
-            outputs.append(output_ch)
+        #     outputs.append(output_ch)
 
         return outputs
 
