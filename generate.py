@@ -150,7 +150,6 @@ class Generator:
                         self.decoder_inputs: decoder_inputs,
                         self.decoder_lengths: decoder_lengths})
                     prob_list = probs.tolist()[0]
-                    embed()
                     prob_list[0] = 0.
                     if length > 0:
                         if i  == length:
