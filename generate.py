@@ -57,7 +57,9 @@ class Generator:
                 bias = softmax_b)
         self.probs = tf.nn.softmax(logits)
 
+        # targets: shape=(_BATCH_SIZE, ?)
         self.targets = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
+        # labels: shape=(_BATCH_SIZE * ?,VOCAB_SIZE)
         labels = tf.one_hot(tf.reshape(self.targets, [-1]), depth = VOCAB_SIZE)
         loss = tf.nn.softmax_cross_entropy_with_logits(
                 logits = logits,
