@@ -3,8 +3,8 @@
 
 from data_utils import *
 from plan import Planner
-# from generate_keras import Generator
-from generate import Generator
+from generate_keras import CategoricalGenerator
+# from generate import Generator
 import sys
 
 
@@ -14,7 +14,7 @@ sys.setdefaultencoding('utf8')
 
 if __name__ == '__main__':
     planner = Planner()
-    generator = Generator()
+    generator = CategoricalGenerator()
     while True:
         line = raw_input('Input Text:\t').decode('utf-8').strip()
         if line.lower() == 'quit' or line.lower() == 'exit':
