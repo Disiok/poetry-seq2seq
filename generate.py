@@ -84,7 +84,6 @@ class Generator:
             self.saver.restore(sess, ckpt.model_checkpoint_path)
 
     def _train_a_batch(self, sess, kw_mats, kw_lens, s_mats, s_lens):
-        embed()
         total_loss = 0
         for idx in range(4):
             encoder_feed_dict = {self.encoder_inputs: kw_mats[idx],
