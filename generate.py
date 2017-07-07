@@ -9,7 +9,6 @@ from data_utils import *
 from collections import deque
 import tensorflow as tf
 from tensorflow.contrib import rnn
-from IPython import embed
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -19,6 +18,10 @@ _NUM_UNITS = 128
 _NUM_LAYERS = 4
 _BATCH_SIZE = 64
 
+# limit memory use
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.25
+
 
 class Generator:
 
@@ -27,7 +30,7 @@ class Generator:
         self._embed_ph = tf.placeholder(tf.float32, [VOCAB_SIZE, _NUM_UNITS])
         self._embed_init = embedding.assign(self._embed_ph)
 
-        self.encoder_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(_NUM_UNITS) for _ in range(_NUM_LAYERS)])
+        self.encoder_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(_NUM_UNITS)] * _NUM_LAYERS)
         self.encoder_init_state = self.encoder_cell.zero_state(_BATCH_SIZE, dtype = tf.float32)
         self.encoder_inputs = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
         self.encoder_lengths = tf.placeholder(tf.int32, [_BATCH_SIZE])
@@ -38,7 +41,7 @@ class Generator:
                 sequence_length = self.encoder_lengths,
                 scope = 'encoder')
 
-        self.decoder_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(_NUM_UNITS) for _ in range(_NUM_LAYERS)])
+        self.decoder_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(_NUM_UNITS)] * _NUM_LAYERS)
         self.decoder_init_state = self.encoder_cell.zero_state(_BATCH_SIZE, dtype = tf.float32)
         self.decoder_inputs = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
         self.decoder_lengths = tf.placeholder(tf.int32, [_BATCH_SIZE])
@@ -57,9 +60,7 @@ class Generator:
                 bias = softmax_b)
         self.probs = tf.nn.softmax(logits)
 
-        # targets: shape=(_BATCH_SIZE, ?)
         self.targets = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
-        # labels: shape=(_BATCH_SIZE * ?,VOCAB_SIZE)
         labels = tf.one_hot(tf.reshape(self.targets, [-1]), depth = VOCAB_SIZE)
         loss = tf.nn.softmax_cross_entropy_with_logits(
                 logits = logits,
@@ -84,7 +85,6 @@ class Generator:
             self.saver.restore(sess, ckpt.model_checkpoint_path)
 
     def _train_a_batch(self, sess, kw_mats, kw_lens, s_mats, s_lens):
-        embed()
         total_loss = 0
         for idx in range(4):
             encoder_feed_dict = {self.encoder_inputs: kw_mats[idx],
@@ -103,7 +103,7 @@ class Generator:
 
     def train(self, n_epochs = 6, learn_rate = 0.002, decay_rate = 0.97):
         print "Start training RNN enc-dec model ..."
-        with tf.Session() as sess:
+        with tf.Session(config=config) as sess:
             self._init_vars(sess)
             try:
                 for epoch in range(n_epochs):
@@ -127,7 +127,7 @@ class Generator:
         ckpt = tf.train.get_checkpoint_state(save_dir)
         if not ckpt or not ckpt.model_checkpoint_path:
             self.train(1)
-        with tf.Session() as sess:
+        with tf.Session(config=config) as sess:
             self._init_vars(sess)
             rdict = RhymeDict()
             length = -1
@@ -151,7 +151,6 @@ class Generator:
                         self.decoder_inputs: decoder_inputs,
                         self.decoder_lengths: decoder_lengths})
                     prob_list = probs.tolist()[0]
-                    embed()
                     prob_list[0] = 0.
                     if length > 0:
                         if i  == length:
@@ -191,20 +190,16 @@ class Generator:
                         sentence += ch
                         decoder_inputs[0,0] = self.ch2int[ch]
                         i += 1
+                #uprintln(sentence)
                 sentences.append(sentence)
         return sentences
 
 
 if __name__ == '__main__':
     generator = Generator()
-    counter = 0
     kw_train_data = get_kw_train_data()
-    train_data = get_train_data()
-    for keywords in kw_train_data[:10]:
-        uprintln(keywords)
-        sentences = generator.generate(keywords)
-        uprintln(sentences)
-        for i in range(4):
-            uprintln(train_data[counter + i])
-        counter += 4
+    for row in kw_train_data[100:]:
+        uprintln(row)
+        generator.generate(row)
+        print
 
