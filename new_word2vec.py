@@ -9,6 +9,7 @@ from gensim import models
 from numpy.random import uniform
 
 _w2v_path = os.path.join(data_dir, 'word2vec.npy')
+_w2v_model_path = os.path.join(data_dir, 'word2vec.model')
 
 def _gen_embedding(ndim):
     print "Generating %d-dim word embedding ..." %ndim
@@ -30,6 +31,8 @@ def _gen_embedding(ndim):
     for idx, ch in enumerate(int2ch):
         if ch in model.wv:
             embedding[idx,:] = model.wv[ch]
+    model.save(_w2v_model_path)
+    print "Word2Vec model is saved."
     np.save(_w2v_path, embedding)
     print "Word embedding is saved."
 
