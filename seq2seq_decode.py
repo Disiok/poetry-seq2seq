@@ -40,6 +40,13 @@ def unicode_to_utf8(d):
     return dict((key.encode("UTF-8"), value) for (key, value) in d.items())
 
 def load_config(FLAGS):
+    if FLAGS.model_path is None:
+        checkpoint_path = tf.train.latest_checkpoint('model/')
+        print 'Model path not specified, using the latest checkpoint at: {}'.format(checkpoint_path)
+    else:
+        checkpoint_path = FLAGS.model_path
+        print 'Model path specified at: {}'.format(checkpoint_path)
+    FLAGS.model_path = checkpoint_path
 
     # Load config saved with model
     config_unicode = json.load(open('%s.json' % FLAGS.model_path, 'rb'))
