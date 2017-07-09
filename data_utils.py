@@ -285,12 +285,13 @@ def batch_train_data_with_prev(batch_size):
                     # Always append to previous sentences
                     previous_sentences_ints += [SEP] + current_sentence_ints
 
+
+            if len(source) == batch_size:
                 source_padded = fill_np_matrix(source, batch_size, PAD)
                 target_padded = fill_np_matrix(target, batch_size, PAD)
                 source_lens = np.array(source_lens)
                 target_lens = np.array(target_lens)
 
-            if len(source) == batch_size:
                 yield source_padded, source_lens, target_padded, target_lens
             else:
                 break
