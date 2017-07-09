@@ -56,6 +56,7 @@ tf.app.flags.DEFINE_string('model_name', 'translate.ckpt', 'File name used for m
 tf.app.flags.DEFINE_boolean('shuffle_each_epoch', True, 'Shuffle training dataset for each epoch')
 tf.app.flags.DEFINE_boolean('sort_by_length', True, 'Sort pre-fetched minibatches by their target sequence lengths')
 tf.app.flags.DEFINE_boolean('use_fp16', False, 'Use half precision float16 instead of float32 as dtype')
+tf.app.flags.DEFINE_boolean('bidirectional', True, 'Use bidirectional encoder')
 
 # TODO(sdsuo): Make start token and end token more robust
 tf.app.flags.DEFINE_integer('start_token', 0, 'Start token')
