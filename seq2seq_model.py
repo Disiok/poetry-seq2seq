@@ -337,7 +337,6 @@ class Seq2SeqModel:
                 # Contruct graphs for minimizing loss
                 self.init_optimizer()
 
-
             elif self.mode == 'decode':
                 # start_tokens: [batch_size,]
                 start_tokens = tf.ones([self.batch_size,], tf.int32) * self.start_token
@@ -360,6 +359,7 @@ class Seq2SeqModel:
                         output_layer=output_layer
                     )
                 else:
+                    print 'Beamsearch decode is not yet implemented.'
                     raise NotImplementedError
 
 
@@ -372,6 +372,7 @@ class Seq2SeqModel:
                 if not self.use_beamsearch_decode:
                     self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
                 else:
+                    print '{} mode is not recognized.'.format(self.mode)
                     raise NotImplementedError
 
             else:
