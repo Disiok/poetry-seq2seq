@@ -155,17 +155,6 @@ class Generator:
                         if i  == length:
                             prob_list = [.0]*VOCAB_SIZE
                             prob_list[-1] = 1.
-                        elif i == length-1:
-                            for j, ch in enumerate(self.int2ch):
-                                if  0 == j or VOCAB_SIZE-1 == j:
-                                    prob_list[j] = 0.
-                                else:
-                                    rhyme = rdict.get_rhyme(ch)
-                                    tone = rdict.get_tone(ch)
-                                    if (1 == idx and 'p' != tone) or \
-                                            (2 == idx and (rdict.get_rhyme(rhyme_ch) == rhyme or 'z' != tone)) or \
-                                            (3 == idx and (ch == rhyme_ch or rdict.get_rhyme(rhyme_ch) != rhyme or 'p' != tone)):
-                                        prob_list[j] = 0.
                         else:
                             prob_list[-1] = 0.
                     else:
@@ -173,15 +162,8 @@ class Generator:
                             prob_list[-1] = 0.
                     prob_sums = np.cumsum(prob_list)
                     if prob_sums[-1] == 0.:
-                        prob_list = probs.tolist()[0]
-                        prob_sums = np.cumsum(prob_list)
-                    for j in range(VOCAB_SIZE-1, -1, -1):
-                        if random.random() < prob_list[j]/prob_sums[j]:
-                            ch = self.int2ch[j]
-                            break
-                    #ch = self.int2ch[np.argmax(prob_list)]
-                    if idx == 1 and i == length-1:
-                        rhyme_ch = ch
+                        raise RuntimeError('Cum sum is zero')
+                    ch = self.int2ch[np.argmax(prob_list)]
                     if ch == self.int2ch[-1]:
                         length = i
                         break
