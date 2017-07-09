@@ -79,6 +79,8 @@ class Seq2SeqModel:
             self.use_beamsearch_decode = True if self.beam_width > 1 else False
             self.max_decode_step = config['max_decode_step']
 
+            self.decode_mode = config['decode_mode']
+
         self.start_token = config['start_token']
         self.end_token = config['end_token']
 
@@ -267,6 +269,113 @@ class Seq2SeqModel:
         return MultiRNNCell(self.decoder_cell_list), decoder_initial_state
 
 
+    def build_train_decoder(self):
+        self.decoder_inputs_embedded = tf.nn.embedding_lookup(
+            params=self.embedding,
+            ids=self.decoder_inputs_train
+        )
+
+        training_helper = seq2seq.TrainingHelper(
+            inputs=self.decoder_inputs_embedded,
+            sequence_length=self.decoder_inputs_length_train,
+            time_major=False,
+            name='training_helper'
+        )
+        training_decoder = seq2seq.BasicDecoder(
+            cell=self.decoder_cell,
+            helper=training_helper,
+            initial_state=self.decoder_initial_state,
+            output_layer=self.output_layer
+        )
+        max_decoder_length = tf.reduce_max(self.decoder_inputs_length_train)
+
+        self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_train = seq2seq.dynamic_decode(
+            decoder=training_decoder,
+            output_time_major=False,
+            impute_finished=True,
+            maximum_iterations=max_decoder_length
+        )
+
+        # NOTE(sdsuo): Not sure why this is necessary
+        self.decoder_logits_train = tf.identity(self.decoder_outputs_train.rnn_output)
+
+         # Use argmax to extract decoder symbols to emit
+        self.decoder_pred_train = tf.argmax(
+            self.decoder_logits_train,
+            axis=-1,
+            name='decoder_pred_train'
+        )
+
+        # masks: masking for valid and padded time steps, [batch_size, max_time_step + 1]
+        masks = tf.sequence_mask(
+            lengths=self.decoder_inputs_length_train,
+            maxlen=max_decoder_length,
+            dtype=self.dtype,
+            name='masks'
+        )
+
+        # Computes per word average cross-entropy over a batch
+        # Internally calls 'nn_ops.sparse_softmax_cross_entropy_with_logits' by default
+        self.loss = seq2seq.sequence_loss(
+            logits=self.decoder_logits_train,
+            targets=self.decoder_targets_train,
+            weights=masks,
+            average_across_timesteps=True,
+            average_across_batch=True
+        )
+
+        # Training summary for the current batch_loss
+        tf.summary.scalar('loss', self.loss)
+
+        # Contruct graphs for minimizing loss
+        self.init_optimizer()
+
+    def build_decode_decoder(self):
+        # start_tokens: [batch_size,]
+        start_tokens = tf.ones([self.batch_size,], tf.int32) * self.start_token
+        end_token =self.end_token
+
+        if not self.use_beamsearch_decode:
+
+            # Helper to feed inputs for greedy decoding: use the argmax of the output
+            if self.decode_mode == 'sample':
+                print 'Building sample decoder...'
+                decoding_helper = seq2seq.SampleEmbeddingHelper(
+                    start_tokens=start_tokens,
+                    end_token=end_token,
+                    embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
+                )
+            elif self.decode_mode == 'greedy':
+                print 'Building greedy decoder...'
+                decoding_helper = seq2seq.GreedyEmbeddingHelper(
+                    start_tokens=start_tokens,
+                    end_token=end_token,
+                    embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
+                )
+            else:
+                raise NotImplementedError('Decode mode {} is not yet implemented'.format(self.decode_mode))
+
+            inference_decoder = seq2seq.BasicDecoder(
+                cell=self.decoder_cell,
+                helper=decoding_helper,
+                initial_state=self.decoder_initial_state,
+                output_layer=self.output_layer
+            )
+        else:
+            raise NotImplementedError('Beamsearch decode is not yet implemented.')
+
+
+        self.decoder_outputs_decode, self.decoder_last_state_decode,self.decoder_outputs_length_decode = seq2seq.dynamic_decode(
+            decoder=inference_decoder,
+            output_time_major=False,
+            maximum_iterations=self.max_decode_step
+        )
+
+        if not self.use_beamsearch_decode:
+            self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
+        else:
+            raise NotImplementedError('{} mode is not recognized.'.format(self.mode))
+
     def build_decoder(self):
         print 'Building decoder...'
         with tf.variable_scope('decoder'):
@@ -274,107 +383,12 @@ class Seq2SeqModel:
             self.decoder_cell, self.decoder_initial_state = self.build_decoder_cell()
 
             # Output projection layer to convert cell_outputs to logits
-            output_layer = Dense(self.vocab_size, name='output_projection')
+            self.output_layer = Dense(self.vocab_size, name='output_projection')
 
             if self.mode == 'train':
-                self.decoder_inputs_embedded = tf.nn.embedding_lookup(
-                    params=self.embedding,
-                    ids=self.decoder_inputs_train
-                )
-
-                training_helper = seq2seq.TrainingHelper(
-                    inputs=self.decoder_inputs_embedded,
-                    sequence_length=self.decoder_inputs_length_train,
-                    time_major=False,
-                    name='training_helper'
-                )
-                training_decoder = seq2seq.BasicDecoder(
-                    cell=self.decoder_cell,
-                    helper=training_helper,
-                    initial_state=self.decoder_initial_state,
-                    output_layer=output_layer
-                )
-                max_decoder_length = tf.reduce_max(self.decoder_inputs_length_train)
-
-                self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_train = seq2seq.dynamic_decode(
-                    decoder=training_decoder,
-                    output_time_major=False,
-                    impute_finished=True,
-                    maximum_iterations=max_decoder_length
-                )
-
-                # NOTE(sdsuo): Not sure why this is necessary
-                self.decoder_logits_train = tf.identity(self.decoder_outputs_train.rnn_output)
-
-                 # Use argmax to extract decoder symbols to emit
-                self.decoder_pred_train = tf.argmax(
-                    self.decoder_logits_train,
-                    axis=-1,
-                    name='decoder_pred_train'
-                )
-
-                # masks: masking for valid and padded time steps, [batch_size, max_time_step + 1]
-                masks = tf.sequence_mask(
-                    lengths=self.decoder_inputs_length_train,
-                    maxlen=max_decoder_length,
-                    dtype=self.dtype,
-                    name='masks'
-                )
-
-                # Computes per word average cross-entropy over a batch
-                # Internally calls 'nn_ops.sparse_softmax_cross_entropy_with_logits' by default
-                self.loss = seq2seq.sequence_loss(
-                    logits=self.decoder_logits_train,
-                    targets=self.decoder_targets_train,
-                    weights=masks,
-                    average_across_timesteps=True,
-                    average_across_batch=True
-                )
-
-                # Training summary for the current batch_loss
-                tf.summary.scalar('loss', self.loss)
-
-                # Contruct graphs for minimizing loss
-                self.init_optimizer()
-
+                self.build_train_decoder()
             elif self.mode == 'decode':
-                # start_tokens: [batch_size,]
-                start_tokens = tf.ones([self.batch_size,], tf.int32) * self.start_token
-                end_token =self.end_token
-
-                if not self.use_beamsearch_decode:
-
-                    # Helper to feed inputs for greedy decoding: use the argmax of the output
-                    decoding_helper = seq2seq.SampleEmbeddingHelper(
-                        start_tokens=start_tokens,
-                        end_token=end_token,
-                        embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
-                    )
-
-                    print 'Building greedy decoder...'
-                    inference_decoder = seq2seq.BasicDecoder(
-                        cell=self.decoder_cell,
-                        helper=decoding_helper,
-                        initial_state=self.decoder_initial_state,
-                        output_layer=output_layer
-                    )
-                else:
-                    print 'Beamsearch decode is not yet implemented.'
-                    raise NotImplementedError
-
-
-                self.decoder_outputs_decode, self.decoder_last_state_decode,self.decoder_outputs_length_decode = seq2seq.dynamic_decode(
-                    decoder=inference_decoder,
-                    output_time_major=False,
-                    maximum_iterations=self.max_decode_step
-                )
-
-                if not self.use_beamsearch_decode:
-                    self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
-                else:
-                    print '{} mode is not recognized.'.format(self.mode)
-                    raise NotImplementedError
-
+                self.build_decode_decoder()
             else:
                 raise RuntimeError
 

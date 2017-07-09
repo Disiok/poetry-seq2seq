@@ -24,6 +24,7 @@ tf.app.flags.DEFINE_integer('decode_batch_size', 80, 'Batch size used for decodi
 tf.app.flags.DEFINE_integer('max_decode_step', 500, 'Maximum time step limit to decode')
 tf.app.flags.DEFINE_boolean('write_n_best', False, 'Write n-best list (n=beam_width)')
 tf.app.flags.DEFINE_string('model_path', None, 'Path to a specific model checkpoint.')
+tf.app.flags.DEFINE_string('decode_mode', 'sample', 'Decode helper to use for decoding')
 tf.app.flags.DEFINE_string('decode_input', 'data/newstest2012.bpe.de', 'Decoding input path')
 tf.app.flags.DEFINE_string('decode_output', 'data/newstest2012.bpe.de.trans', 'Decoding output path')
 
@@ -55,10 +56,10 @@ def prepare_batch(vocab):
     int2ch, ch2int = vocab
 
     keywords = [
-        u'白云',
-        u'蓝天',
-        u'游玩',
-        u'青山'
+        u'楚',
+        u'收拾',
+        u'思乡',
+        u'相随'
     ]
     for keyword in keywords:
         source = fill_np_matrix([[ch2int[ch] for ch in keyword]], 1, 5999)
