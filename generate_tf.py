@@ -1,212 +1,350 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
-from vocab import *
-from rhyme import RhymeDict
-from word2vec import get_word_embedding
-from data_utils import *
-from collections import deque
+# standard
+import os
+from IPython import embed
+
+
+# framework
 import tensorflow as tf
-from tensorflow.contrib import rnn
-from seq2seq_model import Seq2SeqModel
+from tensorflow.contrib import rnn, seq2seq
+
+from tensorflow.python.ops.rnn_cell import GRUCell
+from tensorflow.python.ops.rnn_cell import LSTMCell
+from tensorflow.python.ops.rnn_cell import MultiRNNCell
+from tensorflow.python.ops.rnn_cell import DropoutWrapper, ResidualWrapper
+
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import control_flow_ops
+from tensorflow.python.framework import constant_op
+from tensorflow.python.framework import dtypes
+from tensorflow.python.layers.core import Dense
+from tensorflow.python.util import nest
+
+from tensorflow.contrib.seq2seq.python.ops import attention_wrapper
+from tensorflow.contrib.seq2seq.python.ops import beam_search_decoder
+
+# custom
+from utils import save_dir
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 _model_path = os.path.join(save_dir, 'model')
 
+_VOCAB_SIZE = 6000
 _NUM_UNITS = 128
 _NUM_LAYERS = 4
 _BATCH_SIZE = 64
 
 
 class Generator:
+    """
+    Seq2Seq model based on tensorflow.contrib.seq2seq
+    """
+    def build_model(self):
+        print 'Building model...'
+
+        # Build encoder and decoder networks
+        self.init_placeholders()
+        self.build_encoder()
+        self.build_decoder()
+
+        # Merge all the training summaries
+        self.summary_op = tf.summary.merge_all()
+
+    def init_placeholders(self):
+        # embedding_placeholder: [vocab_size, hidden_units]
+        self.embedding_placeholder = tf.placeholder(
+            name='embedding_placeholder',
+            shape=[self.vocab_size, self.hidden_units],
+            dtype=self.dtype
+        )
+
+        self.embedding = tf.get_variable(
+            name='embedding',
+            shape=[self.vocab_size, self.hidden_units],
+            trainable=False,
+        )
+
+        self.init_embedding = self.embedding.assign(self.embedding_placeholder)
+
+        # encode_inputs: [batch_size, time_steps]
+        self.encoder_inputs = tf.placeholder(
+            name='encoder_inputs',
+            shape=(None, None),
+            dtype=tf.int32
+        )
+
+        # encoder_inputs_length: [batch_size]
+        self.encoder_inputs_length = tf.placeholder(
+            name='encoder_inputs_length',
+            shape=(None,),
+            dtype=tf.int32
+        )
+
+        if self.mode == 'train':
+            # decoder_inputs: [batch_size, max_time_steps]
+            self.decoder_inputs = tf.placeholder(
+                dtype=tf.int32,
+                shape=(None, None),
+                name='decoder_inputs'
+            )
+
+            # decoder_inputs_length: [batch_size]
+            self.decoder_inputs_length = tf.placeholder(
+                dtype=tf.int32,
+                shape=(None,),
+                name='decoder_inputs_length'
+            )
+
+            # TODO(sdsuo): Make corresponding modification in data_utils
+            decoder_start_token = tf.ones(
+                shape=[self.batch_size, 1],
+                dtype=tf.int32
+            ) * self.start_token
+            decoder_end_token = tf.ones(
+                shape=[self.batch_size, 1],
+                dtype=tf.int32
+            ) * self.end_token
+
+            # decoder_inputs_train: [batch_size , max_time_steps + 1]
+            # insert _GO symbol in front of each decoder input
+            self.decoder_inputs_train = tf.concat([decoder_start_token,
+                                                  self.decoder_inputs], axis=1)
+
+            # decoder_inputs_length_train: [batch_size]
+            self.decoder_inputs_length_train = self.decoder_inputs_length + 1
+
+            # decoder_targets_train: [batch_size, max_time_steps + 1]
+            # insert EOS symbol at the end of each decoder input
+            self.decoder_targets_train = tf.concat([self.decoder_inputs,
+                                                   decoder_end_token], axis=1)
+
+    def build_single_cell(self):
+        if self.cell_type == 'gru':
+            cell_type = GRUCell
+        elif self.cell_type == 'lstm':
+            cell_type = LSTMCell
+        else:
+            raise RuntimeError('Unknown cell type!')
+        cell = cell_type(self.hidden_units)
+
+        return cell
+
+    def build_encoder_cell(self):
+        multi_cell = MultiRNNCell([self.build_single_cell() for _ in range(self.depth)])
+
+        return multi_cell
+
+    def build_encoder(self):
+        print 'Building encoder...'
+        with tf.variable_scope('encoder'):
+            # Build encoder cell
+            self.encoder_cell = self.build_encoder_cell()
+
+
+            # embedded inputs: [batch_size, time_step, embedding_size]
+            self.encoder_inputs_embedded = tf.nn.embedding_lookup(
+                params=self.embedding,
+                ids=self.encoder_inputs
+            )
+
+            # TODO(sdsuo): Decide if we need a Dense input layer here
+
+            # Encode input sequences into context vectors
+            # encoder_outputs: [batch_size, time_step, cell_output_size]
+            # encoder_last_state: [batch_size, cell_output_size]
+            self.encoder_outputs, self.encoder_last_state = tf.nn.dynamic_rnn(
+                cell=self.encoder_cell,
+                inputs=self.encoder_inputs_embedded,
+                sequence_length=self.encoder_inputs_length,
+                dtype=self.dtype,
+                time_major=False
+            )
+
+    def build_decoder_cell(self):
+        # TODO(sdsuo): Read up and decide whether to use beam search
+        self.attention_mechanism = seq2seq.BahdanauAttention(
+            num_units=self.hidden_units,
+            memory=self.encoder_outputs,
+            memory_sequence_length=self.encoder_inputs_length
+        )
+
+        self.decoder_cell_list = [
+            self.build_single_cell() for _ in range(self.depth)
+        ]
+
+        # NOTE(sdsuo): Not sure what this does yet
+        def attn_decoder_input_fn(inputs, attention):
+            pass
+
+        # NOTE(sdsuo): Attention mechanism is implemented only on the top decoder layer
+        self.decoder_cell_list[-1] = seq2seq.AttentionWrapper(
+            cell=self.decoder_cell_list[-1],
+            attention_mechanism=self.attention_mechanism,
+            attention_layer_size=self.hidden_units,
+            cell_input_fn=attn_decoder_input_fn,
+            initial_cell_state=self.encoder_last_state[-1],
+            alignment_history=False,
+            name='attention_wrapper'
+        )
+
+        # NOTE(sdsuo): Not sure why this is necessary
+        # To be compatible with AttentionWrapper, the encoder last state
+        # of the top layer should be converted into the AttentionWrapperState form
+        # We can easily do this by calling AttentionWrapper.zero_state
+
+        # Also if beamsearch decoding is used, the batch_size argument in .zero_state
+        # should be ${decoder_beam_width} times to the origianl batch_size
+        if self.use_beamsearch_decode:
+            batch_size = self.batch_size * self.beam_width
+        else:
+            batch_size = self.batch_size
+
+        initial_state = [state for state in self.encoder_last_state]
+        initial_state[-1] = self.decoder_cell_list[-1].zero_state(
+            batch_size=batch_size,
+            dtype=self.dtype
+        )
+        decoder_initial_state = tuple(initial_state)
+
+
+        return MultiRNNCell(self.decoder_cell_list), decoder_initial_state
+
+
+    def build_decoder(self):
+        print 'Building decoder...'
+        with tf.variable_scope('decoder'):
+            # Building decoder_cell and decoder_initial_state
+            self.decoder_cell, self.decoder_initial_state = self.build_decoder_cell()
+
+            # Output projection layer to convert cell_outputs to logits
+            output_layer = Dense(self.vocab_size, name='output_projection')
+
+            if self.mode == 'train':
+                self.decoder_inputs_embedded = tf.nn.embedding_lookup(
+                    params=self.embedding,
+                    ids=self.decoder_inputs_train
+                )
+
+                training_helper = seq2seq.TrainingHelper(
+                    inputs=self.decoder_inputs_embedded,
+                    sequence_length=self.decoder_inputs_length_train,
+                    time_major=False,
+                    name='training_helper'
+                )
+                training_decoder = seq2seq.BasicDecoder(
+                    cell=self.decoder_cell,
+                    helper=training_helper,
+                    initial_state=self.decoder_initial_state,
+                    output_layer=output_layer
+                )
+                max_decoder_length = tf.reduce_max(self.decoder_inputs_length_train)
+
+                embed()
+
+                self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_train = seq2seq.dynamic_decode(
+                    decoder=training_decoder,
+                    output_time_major=False,
+                    impute_finished=True,
+                    maximum_iterations=max_decoder_length
+                )
+
+                # NOTE(sdsuo): Not sure why this is necessary
+                self.decoder_logits_train = tf.identity(self.decoder_outputs_train.rnn_output)
+
+                 # Use argmax to extract decoder symbols to emit
+                self.decoder_pred_train = tf.argmax(
+                    self.decoder_logits_train,
+                    axis=-1,
+                    name='decoder_pred_train'
+                )
+
+                # masks: masking for valid and padded time steps, [batch_size, max_time_step + 1]
+                masks = tf.sequence_mask(
+                    lengths=self.decoder_inputs_length_train,
+                    maxlen=max_decoder_length,
+                    dtype=self.dtype,
+                    name='masks'
+                )
+
+                # Computes per word average cross-entropy over a batch
+                # Internally calls 'nn_ops.sparse_softmax_cross_entropy_with_logits' by default
+                self.loss = seq2seq.sequence_loss(
+                    logits=self.decoder_logits_train,
+                    targets=self.decoder_targets_train,
+                    weights=masks,
+                    average_across_timesteps=True,
+                    average_across_batch=True
+                )
+
+                # Training summary for the current batch_loss
+                tf.summary.scalar('loss', self.loss)
+
+                # Contruct graphs for minimizing loss
+                self.init_optimizer()
+
+
+            elif self.mode == 'decode':
+                pass
+            else:
+                raise RuntimeError
+
+    def init_optimizer(self):
+        print("Setting optimizer..")
+        # Gradients and SGD update operation for training the model
+        trainable_params = tf.trainable_variables()
+        if self.optimizer.lower() == 'adadelta':
+            self.opt = tf.train.AdadeltaOptimizer(learning_rate=self.learning_rate)
+        elif self.optimizer.lower() == 'adam':
+            self.opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+        elif self.optimizer.lower() == 'rmsprop':
+            self.opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
+        else:
+            self.opt = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
+
+        # Compute gradients of loss w.r.t. all trainable variables
+        gradients = tf.gradients(self.loss, trainable_params)
+
+        # Clip gradients by a given maximum_gradient_norm
+        clip_gradients, _ = tf.clip_by_global_norm(gradients, self.max_gradient_norm)
+
+        # Update the model
+        self.updates = self.opt.apply_gradients(
+            zip(clip_gradients, trainable_params), global_step=self.global_step)
 
     def __init__(self):
-        
-        # embedding = tf.Variable(tf.constant(0.0, shape=[VOCAB_SIZE, _NUM_UNITS]), trainable = False)
-        # self._embed_ph = tf.placeholder(tf.float32, [VOCAB_SIZE, _NUM_UNITS])
-        # self._embed_init = embedding.assign(self._embed_ph)
+        self.vocab_size = 6000
+        self.hidden_units = _NUM_UNITS
+        self.depth = _NUM_LAYERS
+        self.cell_type = 'lstm'
+        self.dtype = tf.float32
+        self.batch_size = 64
+        self.optimizer = 'adam'
+        self.max_gradient_norm = 10
+        self.global_step = 100
+        self.mode = 'train'
+        self.start_token = 0
+        self.end_token = -1
+        self.use_beamsearch_decode = False
+        self.beam_width = 5
+        self.learning_rate = 0.1
 
-        # self.encoder_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(_NUM_UNITS) for _ in range(_NUM_LAYERS)])
-        # self.encoder_init_state = self.encoder_cell.zero_state(_BATCH_SIZE, dtype = tf.float32)
-        # self.encoder_inputs = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
-        # self.encoder_lengths = tf.placeholder(tf.int32, [_BATCH_SIZE])
-        # _, self.encoder_final_state = tf.nn.dynamic_rnn(
-        #         cell = self.encoder_cell,
-        #         initial_state = self.encoder_init_state,
-        #         inputs = tf.nn.embedding_lookup(embedding, self.encoder_inputs),
-        #         sequence_length = self.encoder_lengths,
-        #         scope = 'encoder')
-
-        # self.decoder_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(_NUM_UNITS) for _ in range(_NUM_LAYERS)])
-        # self.decoder_init_state = self.encoder_cell.zero_state(_BATCH_SIZE, dtype = tf.float32)
-        # self.decoder_inputs = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
-        # self.decoder_lengths = tf.placeholder(tf.int32, [_BATCH_SIZE])
-        # outputs, self.decoder_final_state = tf.nn.dynamic_rnn(
-        #         cell = self.decoder_cell,
-        #         initial_state = self.decoder_init_state,
-        #         inputs = tf.nn.embedding_lookup(embedding, self.decoder_inputs),
-        #         sequence_length = self.decoder_lengths,
-        #         scope = 'decoder')
-
-        # with tf.variable_scope('decoder'):
-        #     softmax_w = tf.get_variable('softmax_w', [_NUM_UNITS, VOCAB_SIZE])
-        #     softmax_b = tf.get_variable('softmax_b', [VOCAB_SIZE])
-
-        # logits = tf.nn.bias_add(tf.matmul(tf.reshape(outputs, [-1, _NUM_UNITS]), softmax_w),
-        #         bias = softmax_b)
-        # self.probs = tf.nn.softmax(logits)
-
-        # self.targets = tf.placeholder(tf.int32, [_BATCH_SIZE, None])
-        # labels = tf.one_hot(tf.reshape(self.targets, [-1]), depth = VOCAB_SIZE)
-        # loss = tf.nn.softmax_cross_entropy_with_logits(
-        #         logits = logits,
-        #         labels = labels)
-        # self.loss = tf.reduce_mean(loss)
-
-        # self.learn_rate = tf.Variable(0.0, trainable = False)
-        # self.opt_op = tf.train.AdamOptimizer(self.learn_rate).minimize(self.loss)
-
-        # self.saver = tf.train.Saver(tf.global_variables())
-        # self.int2ch, self.ch2int = get_vocab()
+        self.build_model()
 
     def _init_vars(self, sess):
-        # ckpt = tf.train.get_checkpoint_state(save_dir)
-        # if not ckpt or not ckpt.model_checkpoint_path:
-        #     init_op = tf.group(tf.global_variables_initializer(),
-        #             tf.local_variables_initializer())
-        #     sess.run(init_op)
-        #     sess.run([self._embed_init], feed_dict = {
-        #         self._embed_ph: get_word_embedding(_NUM_UNITS)})
-        # else:
-        #     self.saver.restore(sess, ckpt.model_checkpoint_path)
+        pass
 
     def _train_a_batch(self, sess, kw_mats, kw_lens, s_mats, s_lens):
-        # total_loss = 0
-        # for idx in range(4):
-        #     encoder_feed_dict = {self.encoder_inputs: kw_mats[idx],
-        #             self.encoder_lengths: kw_lens[idx]}
-        #     if idx > 0:
-        #         encoder_feed_dict[self.encoder_init_state] = state
-        #     state = sess.run(self.encoder_final_state,
-        #             feed_dict = encoder_feed_dict)
-        #     state, loss, _ = sess.run([self.decoder_final_state, self.loss, self.opt_op], feed_dict = {
-        #         self.decoder_init_state: state,
-        #         self.decoder_inputs: s_mats[idx][:,:-1],
-        #         self.decoder_lengths: s_lens[idx],
-        #         self.targets: s_mats[idx][:,1:]})
-        #     total_loss += loss
-        # print "loss = %f" %(total_loss/4)
+        pass
 
     def train(self, n_epochs = 6, learn_rate = 0.002, decay_rate = 0.97):
-        # print "Start training RNN enc-dec model ..."
-        # with tf.Session() as sess:
-        #     self._init_vars(sess)
-        #     try:
-        #         for epoch in range(n_epochs):
-        #             batch_no = 0
-        #             sess.run(tf.assign(self.learn_rate, learn_rate * decay_rate ** epoch))
-        #             for kw_mats, kw_lens, s_mats, s_lens in batch_train_data(_BATCH_SIZE):
-        #                 print "[Training Seq2Seq] epoch = %d/%d, line %d to %d ..." \
-        #                         %(epoch, n_epochs, batch_no*_BATCH_SIZE, (batch_no+1)*_BATCH_SIZE),
-        #                 self._train_a_batch(sess, kw_mats, kw_lens, s_mats, s_lens)
-        #                 batch_no += 1
-        #                 if 0 == batch_no%32:
-        #                     self.saver.save(sess, _model_path)
-        #                     print "[Training Seq2Seq] The temporary model has been saved."
-        #             self.saver.save(sess, _model_path)
-        #         print "Training has finished."
-        #     except KeyboardInterrupt:
-        #         print "\nTraining is interrupted."
+        pass
 
     def generate(self, keywords):
-        """
-
-        Args:
-            keywords ([unicode str]): list of keywords
-
-        Returns:
-            sentences ([unicode str]): list of sentences
-        """
-        
-        # sentences = []
-        # ckpt = tf.train.get_checkpoint_state(save_dir)
-        # if not ckpt or not ckpt.model_checkpoint_path:
-        #     self.train(1)
-        # with tf.Session() as sess:
-        #     self._init_vars(sess)
-        #     rdict = RhymeDict()
-        #     length = -1
-        #     rhyme_ch = None
-        #     for idx, keyword in enumerate(keywords):
-        #         kw_mat = fill_np_matrix([[self.ch2int[ch] for ch in keyword]], _BATCH_SIZE, VOCAB_SIZE-1)
-        #         kw_len = fill_np_array([len(keyword)], _BATCH_SIZE, 0)
-        #         encoder_feed_dict = {self.encoder_inputs: kw_mat,
-        #                 self.encoder_lengths: kw_len}
-        #         if idx > 0:
-        #             encoder_feed_dict[self.encoder_init_state] = state
-        #         state = sess.run(self.encoder_final_state,
-        #                 feed_dict = encoder_feed_dict)
-        #         sentence = u''
-        #         decoder_inputs = np.zeros([_BATCH_SIZE, 1], dtype = np.int32)
-        #         decoder_lengths = fill_np_array([1], _BATCH_SIZE, 0)
-        #         i = 0
-        #         while True:
-        #             probs, state = sess.run([self.probs, self.decoder_final_state], feed_dict = {
-        #                 self.decoder_init_state: state,
-        #                 self.decoder_inputs: decoder_inputs,
-        #                 self.decoder_lengths: decoder_lengths})
-        #             prob_list = probs.tolist()[0]
-        #             prob_list[0] = 0.
-        #             if length > 0:
-        #                 if i  == length:
-        #                     prob_list = [.0]*VOCAB_SIZE
-        #                     prob_list[-1] = 1.
-        #                 elif i == length-1:
-        #                     for j, ch in enumerate(self.int2ch):
-        #                         if  0 == j or VOCAB_SIZE-1 == j:
-        #                             prob_list[j] = 0.
-        #                         else:
-        #                             rhyme = rdict.get_rhyme(ch)
-        #                             tone = rdict.get_tone(ch)
-        #                             if (1 == idx and 'p' != tone) or \
-        #                                     (2 == idx and (rdict.get_rhyme(rhyme_ch) == rhyme or 'z' != tone)) or \
-        #                                     (3 == idx and (ch == rhyme_ch or rdict.get_rhyme(rhyme_ch) != rhyme or 'p' != tone)):
-        #                                 prob_list[j] = 0.
-        #                 else:
-        #                     prob_list[-1] = 0.
-        #             else:
-        #                 if i != 5 and i != 7:
-        #                     prob_list[-1] = 0.
-        #             prob_sums = np.cumsum(prob_list)
-        #             if prob_sums[-1] == 0.:
-        #                 prob_list = probs.tolist()[0]
-        #                 prob_sums = np.cumsum(prob_list)
-        #             for j in range(VOCAB_SIZE-1, -1, -1):
-        #                 if random.random() < prob_list[j]/prob_sums[j]:
-        #                     ch = self.int2ch[j]
-        #                     break
-        #             #ch = self.int2ch[np.argmax(prob_list)]
-        #             if idx == 1 and i == length-1:
-        #                 rhyme_ch = ch
-        #             if ch == self.int2ch[-1]:
-        #                 length = i
-        #                 break
-        #             else:
-        #                 sentence += ch
-        #                 decoder_inputs[0,0] = self.ch2int[ch]
-        #                 i += 1
-        #         #uprintln(sentence)
-        #         sentences.append(sentence)
-        # return sentences
-
+        pass
 
 if __name__ == '__main__':
     generator = Generator()
-    kw_train_data = get_kw_train_data()
-    for row in kw_train_data[100:]:
-        uprintln(row)
-        generator.generate(row)
-        print
 
