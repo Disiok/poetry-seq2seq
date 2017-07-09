@@ -345,7 +345,7 @@ class Seq2SeqModel:
                 if not self.use_beamsearch_decode:
 
                     # Helper to feed inputs for greedy decoding: use the argmax of the output
-                    decoding_helper = seq2seq.GreedyEmbeddingHelper(
+                    decoding_helper = seq2seq.SampleEmbeddingHelper(
                         start_tokens=start_tokens,
                         end_token=end_token,
                         embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)

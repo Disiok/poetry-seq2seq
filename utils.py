@@ -7,7 +7,7 @@ import os
 import json
 import random
 import numpy as np
-from keras.utils.np_utils import to_categorical
+# from keras.utils.np_utils import to_categorical
 
 VOCAB_SIZE = 6000
 
