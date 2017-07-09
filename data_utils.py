@@ -229,6 +229,73 @@ def batch_train_data(batch_size):
                 yield kw_mats, kw_lens, s_mats, s_lens
 
 
+def batch_train_data_with_prev(batch_size):
+    """Get training data in poem, batch major format
+
+    Args:
+        batch_size:
+
+    Returns:
+        source: [batch_size, time_steps]: keywords + SEP + previous sentences
+        source_lens: [batch_size]: length of source
+        target: [batch_size, time_steps]: current sentence
+        target_lens: [batch_size]: length of target
+    """
+    if not os.path.exists(train_path):
+        _gen_train_data()
+    _, ch2int = get_vocab()
+
+    def sentence_to_ints(sentence):
+        return [ch2int[ch] for ch in sentence]
+
+    SEP = 0
+    PAD = 5999
+
+    with codecs.open(train_path, 'r', 'utf-8') as fin:
+        stop = False
+        while not stop:
+            source = []
+            source_lens = []
+            target = []
+            target_lens = []
+
+            previous_sentences_ints = []
+            for i in range(batch_size):
+                line = fin.readline()
+                if not line:
+                    stop = True
+                    break
+                else:
+                    line_number = i % 4
+                    if line_number == 0:
+                        previous_sentences_ints = []
+
+                    current_sentence, keywords = line.strip().split('\t')
+
+                    current_sentence_ints = sentence_to_ints(current_sentence)
+                    keywords_ints = sentence_to_ints(keywords)
+                    source_ints = keywords_ints + previous_sentences_ints
+
+                    target.append(current_sentence_ints)
+                    target_lens.append(len(current_sentence_ints))
+
+                    source.append(source_ints)
+                    source_lens.append(len(source_ints))
+
+                    # Always append to previous sentences
+                    previous_sentences_ints += [SEP] + current_sentence_ints
+
+                source_padded = fill_np_matrix(source, batch_size, PAD)
+                target_padded = fill_np_matrix(target, batch_size, PAD)
+                source_lens = np.array(source_lens)
+                target_lens = np.array(target_lens)
+
+            if len(source) == batch_size:
+                yield source_padded, source_lens, target_padded, target_lens
+            else:
+                break
+
+
 if __name__ == '__main__':
     train_data = get_train_data()
     print "Size of the training data: %d" %len(train_data)

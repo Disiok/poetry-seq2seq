@@ -12,7 +12,7 @@ from IPython import embed
 import tensorflow as tf
 
 from seq2seq_model import Seq2SeqModel
-from data_utils import batch_train_data
+from data_utils import batch_train_data_with_prev
 from word2vec import get_word_embedding
 
 # Data loading parameters
@@ -121,41 +121,38 @@ def train():
 
             # Prepare batch training data
             # TODO(sdsuo): Make corresponding changes in data_utils
-            for kw_mats, kw_lens, s_mats, s_lens in batch_train_data(FLAGS.batch_size):
-                for idx in range(4):
-                    source, source_len, target, target_len = kw_mats[idx], kw_lens[idx], s_mats[idx], s_lens[idx]
+            for source, source_len, target, target_len in batch_train_data_with_prev(FLAGS.batch_size):
+                step_loss, summary = model.train(
+                    sess,
+                    encoder_inputs=source,
+                    encoder_inputs_length=source_len,
+                    decoder_inputs=target,
+                    decoder_inputs_length=target_len
+                )
 
-                    step_loss, summary = model.train(
-                        sess,
-                        encoder_inputs=source,
-                        encoder_inputs_length=source_len,
-                        decoder_inputs=target,
-                        decoder_inputs_length=target_len
-                    )
+                loss += float(step_loss) / FLAGS.display_freq
+                sents_seen += float(source.shape[0]) # batch_size
 
-                    loss += float(step_loss) / FLAGS.display_freq
-                    sents_seen += float(source.shape[0]) # batch_size
+                # Display information
+                if model.global_step.eval() % FLAGS.display_freq == 0:
 
-                    # Display information
-                    if model.global_step.eval() % FLAGS.display_freq == 0:
+                    avg_perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
 
-                        avg_perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
+                    time_elapsed = time.time() - start_time
+                    step_time = time_elapsed / FLAGS.display_freq
 
-                        time_elapsed = time.time() - start_time
-                        step_time = time_elapsed / FLAGS.display_freq
+                    sents_per_sec = sents_seen / time_elapsed
 
-                        sents_per_sec = sents_seen / time_elapsed
+                    print 'Epoch ', model.global_epoch_step.eval(), 'Step ', model.global_step.eval(), \
+                          'Perplexity {0:.2f}'.format(avg_perplexity), 'Step-time ', step_time, \
+                          '{0:.2f} sents/s'.format(sents_per_sec)
 
-                        print 'Epoch ', model.global_epoch_step.eval(), 'Step ', model.global_step.eval(), \
-                              'Perplexity {0:.2f}'.format(avg_perplexity), 'Step-time ', step_time, \
-                              '{0:.2f} sents/s'.format(sents_per_sec)
+                    loss = 0
+                    sents_seen = 0
+                    start_time = time.time()
 
-                        loss = 0
-                        sents_seen = 0
-                        start_time = time.time()
-
-                        # Record training summary for the current batch
-                        log_writer.add_summary(summary, model.global_step.eval())
+                    # Record training summary for the current batch
+                    log_writer.add_summary(summary, model.global_step.eval())
 
                 # Save the model checkpoint
                 if model.global_step.eval() % FLAGS.save_freq == 0:
