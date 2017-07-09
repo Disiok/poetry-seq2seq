@@ -415,7 +415,7 @@ class Seq2SeqModel:
         self.updates = self.opt.apply_gradients(
             zip(clip_gradients, trainable_params), global_step=self.global_step)
 
-    def save(self, sess, path, var_list=None, global_step=None):
+    def save(self, sess, saver, path, global_step=None):
         """
 
         Args:
@@ -427,13 +427,10 @@ class Seq2SeqModel:
         Returns:
 
         """
-        # Using var_list = None returns the list of all saveable variables
-        saver = tf.train.Saver(var_list=var_list)
-
         save_path = saver.save(sess, save_path=path, global_step=global_step)
         print 'Model saved at {}'.format(save_path)
 
-    def restore(self, sess, path, var_list=None):
+    def restore(self, sess, saver, path):
         """
 
         Args:
@@ -444,8 +441,6 @@ class Seq2SeqModel:
         Returns:
 
         """
-        # Using var_list = None returns the list of all saveable variables
-        saver = tf.train.Saver(var_list=var_list)
         saver.restore(sess, save_path=path)
         print 'Model restored from {}'.format(path)
 
