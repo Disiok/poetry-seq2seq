@@ -28,44 +28,59 @@ from tensorflow.contrib.seq2seq.python.ops import beam_search_decoder
 # custom
 from utils import save_dir
 
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 
 _model_path = os.path.join(save_dir, 'model')
 
-_VOCAB_SIZE = 6000
-_NUM_UNITS = 128
-_NUM_LAYERS = 4
 
 class Seq2SeqModel:
     """
     Seq2Seq model based on tensorflow.contrib.seq2seq
     """
     def __init__(self, config, mode):
+
+        assert mode.lower() in ['train', 'decode']
+
         self.config = config
         self.mode = mode.lower()
 
-        self.vocab_size = _VOCAB_SIZE
-        self.hidden_units = _NUM_UNITS
-        self.depth = _NUM_LAYERS
-        self.cell_type = 'lstm'
-        self.dtype = tf.float32
-        self.optimizer = 'adam'
-        self.max_gradient_norm = 10
-        self.mode = 'train'
-        self.start_token = 0
-        self.end_token = 5999
-        self.use_beamsearch_decode = False
-        self.beam_width = 5
-        self.learning_rate = 0.1
-        self.attn_input_feeding = True
+        self.cell_type = config['cell_type']
+        self.hidden_units = config['hidden_units']
+        self.depth = config['depth']
+        self.attention_type = config['attention_type']
+        self.embedding_size = config['embedding_size']
+        self.vocab_size = config['vocab_size']
+        # self.bidirectional = config.bidirectional
 
-        self.dropout_rate = 0.01
-        self.keep_prob = 1.0 - self.dropout_rate
+        self.num_encoder_symbols = config['num_encoder_symbols']
+        self.num_decoder_symbols = config['num_decoder_symbols']
+
+        self.use_residual = config['use_residual']
+        self.attn_input_feeding = config['attn_input_feeding']
+        self.use_dropout = config['use_dropout']
+        self.keep_prob = 1.0 - config['dropout_rate']
+
+        self.optimizer = config['optimizer']
+        self.learning_rate = config['learning_rate']
+        self.max_gradient_norm = config['max_gradient_norm']
 
         self.global_step = tf.Variable(0, trainable=False, name='global_step')
         self.global_epoch_step = tf.Variable(0, trainable=False, name='global_epoch_step')
         self.increment_global_epoch_step_op = tf.assign(self.global_epoch_step, self.global_epoch_step + 1)
 
+        self.dtype = tf.float16 if config['use_fp16'] else tf.float32
+        self.keep_prob_placeholder = tf.placeholder(self.dtype, shape=[], name='keep_prob')
+
+        self.use_beamsearch_decode=False
+        if self.mode == 'decode':
+            self.beam_width = config['beam_width']
+            self.use_beamsearch_decode = True if self.beam_width > 1 else False
+            self.max_decode_step = config['max_decode_step']
+
+        self.start_token = config['start_token']
+        self.end_token = config['end_token']
 
         self.build_model()
 
@@ -324,7 +339,41 @@ class Seq2SeqModel:
 
 
             elif self.mode == 'decode':
-                pass
+                # start_tokens: [batch_size,]
+                start_tokens = tf.ones([self.batch_size,], tf.int32) * self.start_token
+                end_token =self.end_token
+
+                if not self.use_beamsearch_decode:
+
+                    # Helper to feed inputs for greedy decoding: use the argmax of the output
+                    decoding_helper = seq2seq.GreedyEmbeddingHelper(
+                        start_tokens=start_tokens,
+                        end_token=end_token,
+                        embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
+                    )
+
+                    print 'Building greedy decoder...'
+                    inference_decoder = seq2seq.BasicDecoder(
+                        cell=self.decoder_cell,
+                        helper=decoding_helper,
+                        initial_state=self.decoder_initial_state,
+                        output_layer=output_layer
+                    )
+                else:
+                    raise NotImplementedError
+
+
+                self.decoder_outputs_decode, self.decoder_last_state_decode,self.decoder_outputs_length_decode = seq2seq.dynamic_decode(
+                    decoder=inference_decoder,
+                    output_time_major=False,
+                    maximum_iterations=self.max_decode_step
+                )
+
+                if not self.use_beamsearch_decode:
+                    self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
+                else:
+                    raise NotImplementedError
+
             else:
                 raise RuntimeError
 

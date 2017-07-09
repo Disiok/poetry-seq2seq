@@ -9,7 +9,6 @@ _vocab_path = os.path.join(data_dir, 'vocab.json')
 
 VOCAB_SIZE = 6000
 
-
 def _gen_vocab():
     print "Generating the vocabulary ..."
     corpus = get_all_corpus()
@@ -29,10 +28,10 @@ def _gen_vocab():
 def get_vocab():
     if not os.path.exists(_vocab_path):
         _gen_vocab()
-    int2ch = [u'^']
+    int2ch = [u'<START>']
     with codecs.open(_vocab_path, 'r', 'utf-8') as fin:
         int2ch.extend(json.load(fin))
-    int2ch.append(u' ')
+    int2ch.append(u'<PAD>')
     ch2int = dict((ch, idx) for idx, ch in enumerate(int2ch))
     return int2ch, ch2int
 

@@ -13,6 +13,7 @@ import tensorflow as tf
 
 from seq2seq_model import Seq2SeqModel
 from data_utils import batch_train_data
+from word2vec import get_word_embedding
 
 # Data loading parameters
 tf.app.flags.DEFINE_string('source_vocabulary', 'data/europarl-v7.1.4M.de.json', 'Path to source vocabulary')
@@ -25,11 +26,13 @@ tf.app.flags.DEFINE_string('target_valid_data', 'data/newstest2012.bpe.fr', 'Pat
 # Network parameters
 tf.app.flags.DEFINE_string('cell_type', 'lstm', 'RNN cell for encoder and decoder, default: lstm')
 tf.app.flags.DEFINE_string('attention_type', 'bahdanau', 'Attention mechanism: (bahdanau, luong), default: bahdanau')
-tf.app.flags.DEFINE_integer('hidden_units', 1024, 'Number of hidden units in each layer')
+tf.app.flags.DEFINE_integer('hidden_units', 128, 'Number of hidden units in each layer')
 tf.app.flags.DEFINE_integer('depth', 4, 'Number of layers in each encoder and decoder')
 tf.app.flags.DEFINE_integer('embedding_size', 128, 'Embedding dimensions of encoder and decoder inputs')
 tf.app.flags.DEFINE_integer('num_encoder_symbols', 30000, 'Source vocabulary size')
 tf.app.flags.DEFINE_integer('num_decoder_symbols', 30000, 'Target vocabulary size')
+# NOTE(sdsuo): We used the same vocab for source and target
+tf.app.flags.DEFINE_integer('vocab_size', 6000, 'General vocabulary size')
 
 tf.app.flags.DEFINE_boolean('use_residual', True, 'Use residual connection between layers')
 tf.app.flags.DEFINE_boolean('attn_input_feeding', False, 'Use input feeding method in attentional decoder')
@@ -44,7 +47,7 @@ tf.app.flags.DEFINE_integer('max_epochs', 10, 'Maximum # of training epochs')
 tf.app.flags.DEFINE_integer('max_load_batches', 20, 'Maximum # of batches to load at one time')
 tf.app.flags.DEFINE_integer('max_seq_length', 50, 'Maximum sequence length')
 tf.app.flags.DEFINE_integer('display_freq', 100, 'Display training status every this iteration')
-tf.app.flags.DEFINE_integer('save_freq', 11500, 'Save model checkpoint every this iteration')
+tf.app.flags.DEFINE_integer('save_freq', 100, 'Save model checkpoint every this iteration')
 tf.app.flags.DEFINE_integer('valid_freq', 1150000, 'Evaluate model every this iteration: valid_data needed')
 tf.app.flags.DEFINE_string('optimizer', 'adam', 'Optimizer for training: (adadelta, adam, rmsprop)')
 tf.app.flags.DEFINE_string('model_dir', 'model/', 'Path to save model checkpoints')
@@ -53,6 +56,10 @@ tf.app.flags.DEFINE_string('model_name', 'translate.ckpt', 'File name used for m
 tf.app.flags.DEFINE_boolean('shuffle_each_epoch', True, 'Shuffle training dataset for each epoch')
 tf.app.flags.DEFINE_boolean('sort_by_length', True, 'Sort pre-fetched minibatches by their target sequence lengths')
 tf.app.flags.DEFINE_boolean('use_fp16', False, 'Use half precision float16 instead of float32 as dtype')
+
+# TODO(sdsuo): Make start token and end token more robust
+tf.app.flags.DEFINE_integer('start_token', 0, 'Start token')
+tf.app.flags.DEFINE_integer('end_token', 5999, 'End token')
 
 # Runtime parameters
 tf.app.flags.DEFINE_boolean('allow_soft_placement', True, 'Allow device soft placement')
@@ -89,6 +96,10 @@ def train():
 
         # Create a new model or reload existing checkpoint
         model = load_or_create_model(sess, FLAGS)
+
+        # Load word2vec embedding
+        embedding = get_word_embedding(FLAGS.hidden_units)
+        model.init_vars(sess, embedding=embedding)
 
         step_time, loss = 0.0, 0.0
         sents_seen = 0
