@@ -38,10 +38,39 @@ _NUM_LAYERS = 4
 _BATCH_SIZE = 64
 
 
-class Generator:
+class Seq2SeqModel:
     """
     Seq2Seq model based on tensorflow.contrib.seq2seq
     """
+    def __init__(self, config, mode):
+        self.config = config
+        self.mode = mode.lower()
+
+        self.vocab_size = _VOCAB_SIZE
+        self.hidden_units = _NUM_UNITS
+        self.depth = _NUM_LAYERS
+        self.cell_type = 'lstm'
+        self.dtype = tf.float32
+        self.optimizer = 'adam'
+        self.max_gradient_norm = 10
+        self.mode = 'train'
+        self.start_token = 0
+        self.end_token = -1
+        self.use_beamsearch_decode = False
+        self.beam_width = 5
+        self.learning_rate = 0.1
+        self.attn_input_feeding = True
+
+        self.dropout_rate = 0.01
+        self.keep_prob = 1.0 - self.dropout_rate
+
+        self.global_step = tf.Variable(0, trainable=False, name='global_step')
+        self.global_epoch_step = tf.Variable(0, trainable=False, name='global_epoch_step')
+        self.increment_global_epoch_step_op = tf.assign(self.global_epoch_step, self.global_epoch_step + 1)
+
+
+        self.build_model()
+
     def build_model(self):
         print 'Building model...'
 
@@ -54,6 +83,9 @@ class Generator:
         self.summary_op = tf.summary.merge_all()
 
     def init_placeholders(self):
+        # TODO(sdsuo): Understand dropout
+        self.keep_prob_placeholder = tf.placeholder(self.dtype, shape=[], name='keep_prob')
+
         # embedding_placeholder: [vocab_size, hidden_units]
         self.embedding_placeholder = tf.placeholder(
             name='embedding_placeholder',
@@ -67,7 +99,7 @@ class Generator:
             trainable=False,
         )
 
-        self.init_embedding = self.embedding.assign(self.embedding_placeholder)
+        self.assign_embedding_op = self.embedding.assign(self.embedding_placeholder)
 
         # encode_inputs: [batch_size, time_steps]
         self.encoder_inputs = tf.placeholder(
@@ -82,6 +114,9 @@ class Generator:
             shape=(None,),
             dtype=tf.int32
         )
+
+        # use dynamic batch_size based on input
+        self.batch_size = tf.shape(self.encoder_inputs)[0]
 
         if self.mode == 'train':
             # decoder_inputs: [batch_size, max_time_steps]
@@ -177,7 +212,13 @@ class Generator:
 
         # NOTE(sdsuo): Not sure what this does yet
         def attn_decoder_input_fn(inputs, attention):
-            pass
+            if not self.attn_input_feeding:
+                return inputs
+
+            # Essential when use_residual=True
+            _input_layer = Dense(self.hidden_units, dtype=self.dtype,
+                                 name='attn_input_feeding')
+            return _input_layer(array_ops.concat([inputs, attention], -1))
 
         # NOTE(sdsuo): Attention mechanism is implemented only on the top decoder layer
         self.decoder_cell_list[-1] = seq2seq.AttentionWrapper(
@@ -241,8 +282,6 @@ class Generator:
                     output_layer=output_layer
                 )
                 max_decoder_length = tf.reduce_max(self.decoder_inputs_length_train)
-
-                embed()
 
                 self.decoder_outputs_train, self.decoder_last_state_train, self.decoder_outputs_length_train = seq2seq.dynamic_decode(
                     decoder=training_decoder,
@@ -314,37 +353,142 @@ class Generator:
         self.updates = self.opt.apply_gradients(
             zip(clip_gradients, trainable_params), global_step=self.global_step)
 
-    def __init__(self):
-        self.vocab_size = 6000
-        self.hidden_units = _NUM_UNITS
-        self.depth = _NUM_LAYERS
-        self.cell_type = 'lstm'
-        self.dtype = tf.float32
-        self.batch_size = 64
-        self.optimizer = 'adam'
-        self.max_gradient_norm = 10
-        self.global_step = 100
-        self.mode = 'train'
-        self.start_token = 0
-        self.end_token = -1
-        self.use_beamsearch_decode = False
-        self.beam_width = 5
-        self.learning_rate = 0.1
+    def save(self, sess, path, var_list=None, global_step=None):
+        """
 
-        self.build_model()
+        Args:
+            sess:
+            path:
+            var_list:
+            global_step:
 
-    def _init_vars(self, sess):
-        pass
+        Returns:
 
-    def _train_a_batch(self, sess, kw_mats, kw_lens, s_mats, s_lens):
-        pass
+        """
+        # Using var_list = None returns the list of all saveable variables
+        saver = tf.train.Saver(var_list=var_list)
 
-    def train(self, n_epochs = 6, learn_rate = 0.002, decay_rate = 0.97):
-        pass
+        save_path = saver.save(sess, save_path=path, global_step=global_step)
+        print 'Model saved at {}'.format(save_path)
 
-    def generate(self, keywords):
-        pass
+    def restore(self, sess, path, var_list=None):
+        """
+
+        Args:
+            sess:
+            path:
+            var_list:
+
+        Returns:
+
+        """
+        # Using var_list = None returns the list of all saveable variables
+        saver = tf.train.Saver(var_list=var_list)
+        saver.restore(sess, save_path=path)
+        print 'Model restored from {}'.format(path)
+
+    def train(self, sess, encoder_inputs, encoder_inputs_length,
+              decoder_inputs, decoder_inputs_length):
+        """Run a train step of the model feeding the given inputs.
+
+        Args:
+          session: tensorflow session to use.
+          encoder_inputs: a numpy int matrix of [batch_size, max_source_time_steps]
+              to feed as encoder inputs
+          encoder_inputs_length: a numpy int vector of [batch_size]
+              to feed as sequence lengths for each element in the given batch
+          decoder_inputs: a numpy int matrix of [batch_size, max_target_time_steps]
+              to feed as decoder inputs
+          decoder_inputs_length: a numpy int vector of [batch_size]
+              to feed as sequence lengths for each element in the given batch
+
+        Returns:
+          A triple consisting of gradient norm (or None if we did not do backward),
+          average perplexity, and the outputs.
+        """
+        # Check if the model is in training mode
+        if self.mode != 'train':
+            raise ValueError('Train step can only be operated in train mode')
+
+        input_feed = self.check_feeds(encoder_inputs, encoder_inputs_length,
+                                      decoder_inputs, decoder_inputs_length, False)
+
+        # TODO(sdsuo): Understand keep prob
+        input_feed[self.keep_prob_placeholder.name] = self.keep_prob
+
+        output_feed = [
+            self.updates,   # Update Op that does optimization
+            self.loss,      # Loss for current batch
+            self.summary_op # Training summary
+        ]
+        outputs = sess.run(output_feed, input_feed)
+
+        return outputs[1], outputs[2]   # loss, summary
+
+    def predict(self, sess, encoder_inputs, encoder_inputs_length):
+        input_feed = self.check_feeds(encoder_inputs, encoder_inputs_length,
+                                      decoder_inputs=None, decoder_inputs_length=None,
+                                      decode=True)
+
+        # Input feeds for dropout
+        input_feed[self.keep_prob_placeholder.name] = 1.0
+
+        output_feed = [self.decoder_pred_decode]
+        outputs = sess.run(output_feed, input_feed)
+
+        # GreedyDecoder: [batch_size, max_time_step]
+        # BeamSearchDecoder: [batch_size, max_time_step, beam_width]
+        return outputs[0]
+
+    def init_vars(self, sess, embedding):
+        sess.run([self.assign_embedding_op], feed_dict={
+            self.embedding_placeholder: embedding
+        })
+
+    def check_feeds(self, encoder_inputs, encoder_inputs_length,
+                    decoder_inputs, decoder_inputs_length, decode):
+        """
+        Args:
+          encoder_inputs: a numpy int matrix of [batch_size, max_source_time_steps]
+              to feed as encoder inputs
+          encoder_inputs_length: a numpy int vector of [batch_size]
+              to feed as sequence lengths for each element in the given batch
+          decoder_inputs: a numpy int matrix of [batch_size, max_target_time_steps]
+              to feed as decoder inputs
+          decoder_inputs_length: a numpy int vector of [batch_size]
+              to feed as sequence lengths for each element in the given batch
+          decode: a scalar boolean that indicates decode mode
+        Returns:
+          A feed for the model that consists of encoder_inputs, encoder_inputs_length,
+          decoder_inputs, decoder_inputs_length
+        """
+
+        input_batch_size = encoder_inputs.shape[0]
+        if input_batch_size != encoder_inputs_length.shape[0]:
+            raise ValueError("Encoder inputs and their lengths must be equal in their "
+                "batch_size, %d != %d" % (input_batch_size, encoder_inputs_length.shape[0]))
+
+        if not decode:
+            target_batch_size = decoder_inputs.shape[0]
+            if target_batch_size != input_batch_size:
+                raise ValueError("Encoder inputs and Decoder inputs must be equal in their "
+                    "batch_size, %d != %d" % (input_batch_size, target_batch_size))
+            if target_batch_size != decoder_inputs_length.shape[0]:
+                raise ValueError("Decoder targets and their lengths must be equal in their "
+                    "batch_size, %d != %d" % (target_batch_size, decoder_inputs_length.shape[0]))
+
+        input_feed = {}
+
+        input_feed[self.encoder_inputs.name] = encoder_inputs
+        input_feed[self.encoder_inputs_length.name] = encoder_inputs_length
+
+        if not decode:
+            input_feed[self.decoder_inputs.name] = decoder_inputs
+            input_feed[self.decoder_inputs_length.name] = decoder_inputs_length
+
+        return input_feed
 
 if __name__ == '__main__':
     generator = Generator()
+    embed()
 
