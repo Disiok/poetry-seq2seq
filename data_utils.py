@@ -184,6 +184,17 @@ def get_kw_train_data():
 
 
 def batch_train_data(batch_size):
+    """Get training data in poem, batch major format
+
+    Args:
+        batch_size:
+
+    Returns:
+        kw_mats: [4, batch_size, time_steps]
+        kw_lens: [4, batch_size]
+        s_mats: [4, batch_size, time_steps]
+        s_lens: [4, batch_size]
+    """
     if not os.path.exists(train_path):
         _gen_train_data()
     _, ch2int = get_vocab()
@@ -192,7 +203,7 @@ def batch_train_data(batch_size):
         while not stop:
             batch_s = [[] for _ in range(4)]
             batch_kw = [[] for _ in range(4)]
-            for i in range(batch_size):
+            for i in range(batch_size * 4):
                 line = fin.readline()
                 if not line:
                     stop = True
