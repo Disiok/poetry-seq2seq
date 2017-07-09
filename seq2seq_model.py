@@ -25,6 +25,8 @@ from tensorflow.python.util import nest
 from tensorflow.contrib.seq2seq.python.ops import attention_wrapper
 from tensorflow.contrib.seq2seq.python.ops import beam_search_decoder
 
+from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
+
 # custom
 from utils import save_dir
 
@@ -48,11 +50,13 @@ class Seq2SeqModel:
 
         self.cell_type = config['cell_type']
         self.hidden_units = config['hidden_units']
+        self.bidirectional = config['bidirectional']
+        self.decoder_hidden_units = self.hidden_units * (2 if self.bidirectional else 1)
+
         self.depth = config['depth']
         self.attention_type = config['attention_type']
         self.embedding_size = config['embedding_size']
         self.vocab_size = config['vocab_size']
-        # self.bidirectional = config.bidirectional
 
         self.num_encoder_symbols = config['num_encoder_symbols']
         self.num_decoder_symbols = config['num_decoder_symbols']
@@ -171,29 +175,25 @@ class Seq2SeqModel:
             self.decoder_targets_train = tf.concat([self.decoder_inputs,
                                                    decoder_end_token], axis=1)
 
-    def build_single_cell(self):
+    def build_single_cell(self, hidden_units):
         if self.cell_type == 'gru':
             cell_type = GRUCell
         elif self.cell_type == 'lstm':
             cell_type = LSTMCell
         else:
             raise RuntimeError('Unknown cell type!')
-        cell = cell_type(self.hidden_units)
+        cell = cell_type(hidden_units)
 
         return cell
 
     def build_encoder_cell(self):
-        multi_cell = MultiRNNCell([self.build_single_cell() for _ in range(self.depth)])
+        multi_cell = MultiRNNCell([self.build_single_cell(self.hidden_units) for _ in range(self.depth)])
 
         return multi_cell
 
     def build_encoder(self):
         print 'Building encoder...'
         with tf.variable_scope('encoder'):
-            # Build encoder cell
-            self.encoder_cell = self.build_encoder_cell()
-
-
             # embedded inputs: [batch_size, time_step, embedding_size]
             self.encoder_inputs_embedded = tf.nn.embedding_lookup(
                 params=self.embedding,
@@ -202,27 +202,55 @@ class Seq2SeqModel:
 
             # TODO(sdsuo): Decide if we need a Dense input layer here
 
-            # Encode input sequences into context vectors
-            # encoder_outputs: [batch_size, time_step, cell_output_size]
-            # encoder_last_state: [batch_size, cell_output_size]
-            self.encoder_outputs, self.encoder_last_state = tf.nn.dynamic_rnn(
-                cell=self.encoder_cell,
-                inputs=self.encoder_inputs_embedded,
-                sequence_length=self.encoder_inputs_length,
-                dtype=self.dtype,
-                time_major=False
-            )
+            if self.bidirectional:
+                # Build encoder cell
+                self.encoder_cell_fw = self.build_encoder_cell()
+                self.encoder_cell_bw = self.build_encoder_cell()
+
+                # Encode input sequences into context vectors
+                # encoder_outputs: [batch_size, time_step, cell_output_size]
+                # encoder_last_state: [batch_size, cell_output_size]
+                self.encoder_outputs_fw_bw, self.encoder_last_state_fw_bw = tf.nn.bidirectional_dynamic_rnn(
+                    cell_fw=self.encoder_cell_fw,
+                    cell_bw=self.encoder_cell_bw,
+                    inputs=self.encoder_inputs_embedded,
+                    sequence_length=self.encoder_inputs_length,
+                    dtype=self.dtype,
+                    time_major=False
+                )
+                self.encoder_outputs_fw, self.encoder_outputs_bw = self.encoder_outputs_fw_bw
+                self.encoder_outputs = tf.concat([self.encoder_outputs_fw, self.encoder_outputs_bw], 2)
+
+                self.encoder_last_state_fw, self.encoder_last_state_bw = self.encoder_last_state_fw_bw
+
+                encoder_last_state_zipped = zip(self.encoder_last_state_fw, self.encoder_last_state_bw)
+                encoder_last_state_list = [LSTMStateTuple(c=tf.concat([fw.c, bw.c], 1), h=tf.concat([fw.h, bw.h], 1))
+                                           for fw, bw in encoder_last_state_zipped]
+                self.encoder_last_state = tuple(encoder_last_state_list)
+            else:
+                self.encoder_cell = self.build_encoder_cell()
+
+                # Encode input sequences into context vectors
+                # encoder_outputs: [batch_size, time_step, cell_output_size]
+                # encoder_last_state: [batch_size, cell_output_size]
+                self.encoder_outputs, self.encoder_last_state = tf.nn.dynamic_rnn(
+                    cell=self.encoder_cell,
+                    inputs=self.encoder_inputs_embedded,
+                    sequence_length=self.encoder_inputs_length,
+                    dtype=self.dtype,
+                    time_major=False
+                )
 
     def build_decoder_cell(self):
         # TODO(sdsuo): Read up and decide whether to use beam search
         self.attention_mechanism = seq2seq.BahdanauAttention(
-            num_units=self.hidden_units,
+            num_units=self.decoder_hidden_units,
             memory=self.encoder_outputs,
             memory_sequence_length=self.encoder_inputs_length
         )
 
         self.decoder_cell_list = [
-            self.build_single_cell() for _ in range(self.depth)
+            self.build_single_cell(self.decoder_hidden_units) for _ in range(self.depth)
         ]
 
         # NOTE(sdsuo): Not sure what this does yet
@@ -231,7 +259,7 @@ class Seq2SeqModel:
                 return inputs
 
             # Essential when use_residual=True
-            _input_layer = Dense(self.hidden_units, dtype=self.dtype,
+            _input_layer = Dense(self.decoder_hidden_units, dtype=self.dtype,
                                  name='attn_input_feeding')
             return _input_layer(array_ops.concat([inputs, attention], -1))
 
@@ -239,7 +267,7 @@ class Seq2SeqModel:
         self.decoder_cell_list[-1] = seq2seq.AttentionWrapper(
             cell=self.decoder_cell_list[-1],
             attention_mechanism=self.attention_mechanism,
-            attention_layer_size=self.hidden_units,
+            attention_layer_size=self.decoder_hidden_units,
             cell_input_fn=attn_decoder_input_fn,
             initial_cell_state=self.encoder_last_state[-1],
             alignment_history=False,
@@ -257,7 +285,8 @@ class Seq2SeqModel:
             batch_size = self.batch_size * self.beam_width
         else:
             batch_size = self.batch_size
-
+        # NOTE(vera): important dimension here
+        # embed()
         initial_state = [state for state in self.encoder_last_state]
         initial_state[-1] = self.decoder_cell_list[-1].zero_state(
             batch_size=batch_size,
