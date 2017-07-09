@@ -54,8 +54,8 @@ class Seq2SeqModel:
         self.optimizer = 'adam'
         self.max_gradient_norm = 10
         self.mode = 'train'
-        self.start_token = 0
-        self.end_token = -1
+        self.start_token = 5999
+        self.end_token = 5998
         self.use_beamsearch_decode = False
         self.beam_width = 5
         self.learning_rate = 0.1
@@ -489,6 +489,6 @@ class Seq2SeqModel:
         return input_feed
 
 if __name__ == '__main__':
-    generator = Generator()
+    model = Seq2SeqModel()
     embed()
 
