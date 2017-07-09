@@ -35,8 +35,6 @@ _model_path = os.path.join(save_dir, 'model')
 _VOCAB_SIZE = 6000
 _NUM_UNITS = 128
 _NUM_LAYERS = 4
-_BATCH_SIZE = 64
-
 
 class Seq2SeqModel:
     """
@@ -54,8 +52,8 @@ class Seq2SeqModel:
         self.optimizer = 'adam'
         self.max_gradient_norm = 10
         self.mode = 'train'
-        self.start_token = 5999
-        self.end_token = 5998
+        self.start_token = 0
+        self.end_token = 5999
         self.use_beamsearch_decode = False
         self.beam_width = 5
         self.learning_rate = 0.1

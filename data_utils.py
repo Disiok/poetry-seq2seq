@@ -203,6 +203,7 @@ def batch_train_data(batch_size):
         while not stop:
             batch_s = [[] for _ in range(4)]
             batch_kw = [[] for _ in range(4)]
+            # NOTE(sdsuo): Modified batch size to remove empty lines in batches
             for i in range(batch_size * 4):
                 line = fin.readline()
                 if not line:
@@ -210,9 +211,11 @@ def batch_train_data(batch_size):
                     break
                 else:
                     toks = line.strip().split('\t')
-                    batch_s[i%4].append([0]+[ch2int[ch] for ch in toks[0]]+[VOCAB_SIZE-1])
+                    # NOTE(sdsuo): Removed start token
+                    batch_s[i%4].append([ch2int[ch] for ch in toks[0]])
                     batch_kw[i%4].append([ch2int[ch] for ch in toks[1]])
-            if 0 == len(batch_s[0]):
+            if batch_size != len(batch_s[0]):
+                print 'Batch incomplete with size {}, expecting size {}, dropping batch.'.format(len(batch_s[0]), batch_size)
                 break
             else:
                 kw_mats = [fill_np_matrix(batch_kw[i], batch_size, VOCAB_SIZE-1) \
@@ -221,7 +224,7 @@ def batch_train_data(batch_size):
                         for i in range(4)]
                 s_mats = [fill_np_matrix(batch_s[i], batch_size, VOCAB_SIZE-1) \
                         for i in range(4)]
-                s_lens = [fill_np_array([len(x)-1 for x in batch_s[i]], batch_size, 0) \
+                s_lens = [fill_np_array([len(x) for x in batch_s[i]], batch_size, 0) \
                         for i in range(4)]
                 yield kw_mats, kw_lens, s_mats, s_lens
 
