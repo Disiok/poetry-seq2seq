@@ -67,10 +67,7 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False, 'Log placement of ops
 
 FLAGS = tf.app.flags.FLAGS
 
-def load_or_create_model(sess, saver, FLAGS):
-    config = OrderedDict(sorted(FLAGS.__flags.items()))
-    model = Seq2SeqModel(config, 'train')
-
+def load_or_create_model(sess, model, saver, FLAGS):
     ckpt = tf.train.get_checkpoint_state(FLAGS.model_dir)
     if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
         print 'Reloading model parameters...'
@@ -81,7 +78,6 @@ def load_or_create_model(sess, saver, FLAGS):
         print 'Created new model parameters...'
         sess.run(tf.global_variables_initializer())
 
-    return model
 
 def train():
     config_proto = tf.ConfigProto(
@@ -90,16 +86,20 @@ def train():
         gpu_options=tf.GPUOptions(allow_growth=True)
     )
 
-    # Create a saver
-    # Using var_list = None returns the list of all saveable variables
-    saver = tf.train.Saver(var_list=None)
-
     with tf.Session(config=config_proto) as sess:
         # Create a log writer object
         log_writer = tf.summary.FileWriter(FLAGS.model_dir, graph=sess.graph)
 
-        # Create a new model or reload existing checkpoint
-        model = load_or_create_model(sess, saver, FLAGS)
+        # Build the model
+        config = OrderedDict(sorted(FLAGS.__flags.items()))
+        model = Seq2SeqModel(config, 'train')
+
+        # Create a saver
+        # Using var_list = None returns the list of all saveable variables
+        saver = tf.train.Saver(var_list=None)
+
+        # Initiaize global variables or reload existing checkpoint
+        load_or_create_model(sess, model, saver, FLAGS)
 
         # Load word2vec embedding
         embedding = get_word_embedding(FLAGS.hidden_units)

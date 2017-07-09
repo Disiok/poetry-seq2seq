@@ -67,8 +67,7 @@ def prepare_batch(vocab):
 
         yield source, source_len
 
-def load_model(session, saver, config):
-    model = Seq2SeqModel(config, 'decode')
+def load_model(session, model, saver):
     if tf.train.checkpoint_exists(FLAGS.model_path):
         print 'Reloading model parameters..'
         model.restore(session, saver, FLAGS.model_path)
@@ -79,10 +78,6 @@ def load_model(session, saver, config):
 
 
 def decode():
-    # Create saver
-    # Using var_list = None returns the list of all saveable variables
-    saver = tf.train.Saver(var_list=None)
-
     # Load model config
     config = load_config(FLAGS)
 
@@ -96,8 +91,15 @@ def decode():
     )
 
     with tf.Session(config=config_proto) as sess:
+        # Build the model
+        model = Seq2SeqModel(config, 'decode')
+
+        # Create saver
+        # Using var_list = None returns the list of all saveable variables
+        saver = tf.train.Saver(var_list=None)
+
         # Reload existing checkpoint
-        model = load_model(sess, saver, config)
+        load_model(sess, model, saver)
 
         for source, source_len in prepare_batch((int2ch, ch2int)):
             predicted_ids = model.predict(
