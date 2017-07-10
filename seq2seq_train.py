@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import time
-import os
-import math
 import json
+import math
+import os
+import time
 from collections import OrderedDict
-from IPython import embed
-
 
 import tensorflow as tf
 
-from seq2seq_model import Seq2SeqModel
 from data_utils import batch_train_data_with_prev
+from seq2seq_model import Seq2SeqModel
 from word2vec import get_word_embedding
 
 # Data loading parameters
@@ -176,7 +174,6 @@ def train():
                   indent=2)
 
     print 'Training terminated'
-
 
 
 def main(_):

@@ -5,26 +5,14 @@
 import os
 from IPython import embed
 
-
 # framework
 import tensorflow as tf
-from tensorflow.contrib import rnn, seq2seq
+from tensorflow.contrib import seq2seq
 
 from tensorflow.python.ops.rnn_cell import GRUCell
-from tensorflow.python.ops.rnn_cell import LSTMCell
 from tensorflow.python.ops.rnn_cell import MultiRNNCell
-from tensorflow.python.ops.rnn_cell import DropoutWrapper, ResidualWrapper
-
 from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.framework import constant_op
-from tensorflow.python.framework import dtypes
 from tensorflow.python.layers.core import Dense
-from tensorflow.python.util import nest
-
-from tensorflow.contrib.seq2seq.python.ops import attention_wrapper
-from tensorflow.contrib.seq2seq.python.ops import beam_search_decoder
-
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 
 # custom
@@ -32,9 +20,6 @@ from utils import save_dir
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-
-_model_path = os.path.join(save_dir, 'model')
 
 
 class Seq2SeqModel:

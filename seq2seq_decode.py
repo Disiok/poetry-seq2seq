@@ -2,21 +2,13 @@
 # coding: utf-8
 
 
-import os
-import math
-import time
 import json
-import random
-from IPython import embed
 
-from collections import OrderedDict
-
-import numpy as np
 import tensorflow as tf
 
+from data_utils import fill_np_array, fill_np_matrix
 from seq2seq_model import Seq2SeqModel
 from vocab import get_vocab
-from data_utils import fill_np_array, fill_np_matrix
 
 # Decoding parameters
 tf.app.flags.DEFINE_integer('beam_width', 1, 'Beam width used in beamsearch')
@@ -35,9 +27,11 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False, 'Log placement of ops
 
 FLAGS = tf.app.flags.FLAGS
 
+
 #json loads strings as unicode; we currently still work with Python 2 strings, and need conversion
 def unicode_to_utf8(d):
     return dict((key.encode("UTF-8"), value) for (key, value) in d.items())
+
 
 def load_config(FLAGS):
     if FLAGS.model_path is None:
@@ -67,6 +61,7 @@ def load_model(session, model, saver):
         raise ValueError(
             'No such file:[{}]'.format(FLAGS.model_path))
     return model
+
 
 class Seq2SeqPredictor:
     def __init__(self):
@@ -117,6 +112,7 @@ class Seq2SeqPredictor:
             previous += [0] + map(lambda x: x[0], predicted[0])[:-1]
         return sentences
 
+
 def main(_):
     KEYWORDS = [
         u'楚',
@@ -126,6 +122,9 @@ def main(_):
     ]
 
     with Seq2SeqPredictor() as predictor:
-        predictor.predict(KEYWORDS)
+        lines = predictor.predict(KEYWORDS)
+        for line in lines:
+            print line
 
-
+if __name__ == '__main__':
+    tf.app.run()
