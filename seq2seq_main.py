@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from plan import Planner
-from seq2seq_decode import Seq2SeqPredictor
+from seq2seq_predict import Seq2SeqPredictor
 import sys
 
 

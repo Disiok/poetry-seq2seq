@@ -15,9 +15,6 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.layers.core import Dense
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 
-# custom
-from utils import save_dir
-
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -28,7 +25,7 @@ class Seq2SeqModel:
     """
     def __init__(self, config, mode):
 
-        assert mode.lower() in ['train', 'decode']
+        assert mode.lower() in ['train', 'predict']
 
         self.config = config
         self.mode = mode.lower()
@@ -63,12 +60,12 @@ class Seq2SeqModel:
         self.keep_prob_placeholder = tf.placeholder(self.dtype, shape=[], name='keep_prob')
 
         self.use_beamsearch_decode=False
-        if self.mode == 'decode':
+        if self.mode == 'predict':
             self.beam_width = config['beam_width']
             self.use_beamsearch_decode = True if self.beam_width > 1 else False
             self.max_decode_step = config['max_decode_step']
 
-            self.decode_mode = config['decode_mode']
+            self.predict_mode = config['predict_mode']
 
         self.start_token = config['start_token']
         self.end_token = config['end_token']
@@ -344,7 +341,7 @@ class Seq2SeqModel:
         # Contruct graphs for minimizing loss
         self.init_optimizer()
 
-    def build_decode_decoder(self):
+    def build_predict_decoder(self):
         # start_tokens: [batch_size,]
         start_tokens = tf.ones([self.batch_size,], tf.int32) * self.start_token
         end_token =self.end_token
@@ -352,14 +349,14 @@ class Seq2SeqModel:
         if not self.use_beamsearch_decode:
 
             # Helper to feed inputs for greedy decoding: use the argmax of the output
-            if self.decode_mode == 'sample':
+            if self.predict_mode == 'sample':
                 print 'Building sample decoder...'
                 decoding_helper = seq2seq.SampleEmbeddingHelper(
                     start_tokens=start_tokens,
                     end_token=end_token,
                     embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
                 )
-            elif self.decode_mode == 'greedy':
+            elif self.predict_mode == 'greedy':
                 print 'Building greedy decoder...'
                 decoding_helper = seq2seq.GreedyEmbeddingHelper(
                     start_tokens=start_tokens,
@@ -367,7 +364,7 @@ class Seq2SeqModel:
                     embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
                 )
             else:
-                raise NotImplementedError('Decode mode {} is not yet implemented'.format(self.decode_mode))
+                raise NotImplementedError('Predict mode {} is not yet implemented'.format(self.predict_mode))
 
             inference_decoder = seq2seq.BasicDecoder(
                 cell=self.decoder_cell,
@@ -401,8 +398,8 @@ class Seq2SeqModel:
 
             if self.mode == 'train':
                 self.build_train_decoder()
-            elif self.mode == 'decode':
-                self.build_decode_decoder()
+            elif self.mode == 'predict':
+                self.build_predict_decoder()
             else:
                 raise RuntimeError
 
@@ -499,7 +496,7 @@ class Seq2SeqModel:
     def predict(self, sess, encoder_inputs, encoder_inputs_length):
         input_feed = self.check_feeds(encoder_inputs, encoder_inputs_length,
                                       decoder_inputs=None, decoder_inputs_length=None,
-                                      decode=True)
+                                      predict=True)
 
         # Input feeds for dropout
         input_feed[self.keep_prob_placeholder.name] = 1.0
@@ -517,7 +514,7 @@ class Seq2SeqModel:
         })
 
     def check_feeds(self, encoder_inputs, encoder_inputs_length,
-                    decoder_inputs, decoder_inputs_length, decode):
+                    decoder_inputs, decoder_inputs_length, predict):
         """
         Args:
           encoder_inputs: a numpy int matrix of [batch_size, max_source_time_steps]
@@ -528,7 +525,7 @@ class Seq2SeqModel:
               to feed as decoder inputs
           decoder_inputs_length: a numpy int vector of [batch_size]
               to feed as sequence lengths for each element in the given batch
-          decode: a scalar boolean that indicates decode mode
+          predict: a scalar boolean that indicates predict mode
         Returns:
           A feed for the model that consists of encoder_inputs, encoder_inputs_length,
           decoder_inputs, decoder_inputs_length
@@ -539,7 +536,7 @@ class Seq2SeqModel:
             raise ValueError("Encoder inputs and their lengths must be equal in their "
                 "batch_size, %d != %d" % (input_batch_size, encoder_inputs_length.shape[0]))
 
-        if not decode:
+        if not predict:
             target_batch_size = decoder_inputs.shape[0]
             if target_batch_size != input_batch_size:
                 raise ValueError("Encoder inputs and Decoder inputs must be equal in their "
@@ -553,7 +550,7 @@ class Seq2SeqModel:
         input_feed[self.encoder_inputs.name] = encoder_inputs
         input_feed[self.encoder_inputs_length.name] = encoder_inputs_length
 
-        if not decode:
+        if not predict:
             input_feed[self.decoder_inputs.name] = decoder_inputs
             input_feed[self.decoder_inputs_length.name] = decoder_inputs_length
 
