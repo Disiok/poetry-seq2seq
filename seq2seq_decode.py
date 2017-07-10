@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-KEYWORDS = [
-    u'楚',
-    u'收拾',
-    u'思乡',
-    u'相随'
-]
 
 import os
 import math
@@ -30,7 +24,7 @@ tf.app.flags.DEFINE_integer('decode_batch_size', 80, 'Batch size used for decodi
 tf.app.flags.DEFINE_integer('max_decode_step', 500, 'Maximum time step limit to decode')
 tf.app.flags.DEFINE_boolean('write_n_best', False, 'Write n-best list (n=beam_width)')
 tf.app.flags.DEFINE_string('model_path', None, 'Path to a specific model checkpoint.')
-tf.app.flags.DEFINE_string('decode_mode', 'sample', 'Decode helper to use for decoding')
+tf.app.flags.DEFINE_string('decode_mode', 'greedy', 'Decode helper to use for decoding')
 tf.app.flags.DEFINE_string('decode_input', 'data/newstest2012.bpe.de', 'Decoding input path')
 tf.app.flags.DEFINE_string('decode_output', 'data/newstest2012.bpe.de.trans', 'Decoding output path')
 
@@ -74,53 +68,64 @@ def load_model(session, model, saver):
             'No such file:[{}]'.format(FLAGS.model_path))
     return model
 
+class Seq2SeqPredictor:
+    def __init__(self):
+        # Load model config
+        config = load_config(FLAGS)
 
-def decode():
-    # Load model config
-    config = load_config(FLAGS)
+        # Get vocab
+        self.int2ch, self.ch2int = get_vocab()
 
-    # Get vocab
-    int2ch, ch2int = get_vocab()
+        config_proto = tf.ConfigProto(
+            allow_soft_placement=FLAGS.allow_soft_placement,
+            log_device_placement=FLAGS.log_device_placement,
+            gpu_options=tf.GPUOptions(allow_growth=True)
+        )
 
-    config_proto = tf.ConfigProto(
-        allow_soft_placement=FLAGS.allow_soft_placement,
-        log_device_placement=FLAGS.log_device_placement,
-        gpu_options=tf.GPUOptions(allow_growth=True)
-    )
+        self.sess = tf.Session(config=config_proto)
 
-    with tf.Session(config=config_proto) as sess:
         # Build the model
-        model = Seq2SeqModel(config, 'decode')
+        self.model = Seq2SeqModel(config, 'decode')
 
         # Create saver
         # Using var_list = None returns the list of all saveable variables
         saver = tf.train.Saver(var_list=None)
 
         # Reload existing checkpoint
-        load_model(sess, model, saver)
+        load_model(self.sess, self.model, saver)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.sess.close()
+
+    def predict(self, keywords):
+        sentences = []
         previous = []
-        for keyword in KEYWORDS:
-
-            source = fill_np_matrix([[ch2int[ch] for ch in keyword] + previous], 1, 5999)
+        for keyword in keywords:
+            source = fill_np_matrix([[self.ch2int[ch] for ch in keyword] + previous], 1, 5999)
             source_len = fill_np_array([len(source[0])], 1, 0)
-            print 'Using input {}, input length {}'.format(source[0], source_len[0])
 
-            predicted = model.predict(
-                sess,
+            predicted = self.model.predict(
+                self.sess,
                 encoder_inputs=source,
                 encoder_inputs_length=source_len
             )
 
-            # Printing
-            for id in predicted[0]:
-                print int2ch[id[0]],
-            print
-
+            sentences.append(''.join(map(lambda x: self.int2ch[x[0]], predicted[0])[:-1]))
             previous += [0] + map(lambda x: x[0], predicted[0])[:-1]
-            print 'Previous lines: {}'.format(previous)
+        return sentences
 
 def main(_):
-    decode()
+    KEYWORDS = [
+        u'楚',
+        u'收拾',
+        u'思乡',
+        u'相随'
+    ]
+
+    with Seq2SeqPredictor() as predictor:
+        predictor.predict(KEYWORDS)
 
 
