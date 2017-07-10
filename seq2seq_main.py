@@ -21,7 +21,7 @@ def main():
 
                 if not input:
                     print 'Input cannot be empty!'
-                elif input.lower() in ['quit', 'exit', 'EOS']:
+                elif input.lower() in ['quit', 'exit']:
                     terminate = True
                 else:
                     # Generate keywords
