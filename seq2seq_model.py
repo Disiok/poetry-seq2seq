@@ -66,6 +66,9 @@ class Seq2SeqModel:
             self.max_decode_step = config['max_decode_step']
 
             self.predict_mode = config['predict_mode']
+        elif self.mode == 'train':
+            self.train_mode = config['train_mode']
+            self.sampling_probability = config['sampling_probability']
 
         self.start_token = config['start_token']
         self.end_token = config['end_token']
@@ -134,7 +137,6 @@ class Seq2SeqModel:
                 name='decoder_inputs_length'
             )
 
-            # TODO(sdsuo): Make corresponding modification in data_utils
             decoder_start_token = tf.ones(
                 shape=[self.batch_size, 1],
                 dtype=tf.int32
@@ -285,13 +287,24 @@ class Seq2SeqModel:
             params=self.embedding,
             ids=self.decoder_inputs_train
         )
+        if self.train_mode == 'ground_true':
+            training_helper = seq2seq.TrainingHelper(
+                inputs=self.decoder_inputs_embedded,
+                sequence_length=self.decoder_inputs_length_train,
+                time_major=False,
+                name='training_helper'
+            )
+        elif self.train_mode == 'scheduled_sampling':
+            training_helper = seq2seq.ScheduledEmbeddingTrainingHelper(
+                inputs=self.decoder_inputs_embedded,
+                sequence_length=self.decoder_inputs_length_train,
+                embedding=lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs),
+                sampling_probability=self.sampling_probability,
+                name='scheduled_embedding_training_helper'
+            )
+        else:
+            raise NotImplementedError('Train mode: {} is not yet implemented'.format(self.train_mode))
 
-        training_helper = seq2seq.TrainingHelper(
-            inputs=self.decoder_inputs_embedded,
-            sequence_length=self.decoder_inputs_length_train,
-            time_major=False,
-            name='training_helper'
-        )
         training_decoder = seq2seq.BasicDecoder(
             cell=self.decoder_cell,
             helper=training_helper,
@@ -354,17 +367,17 @@ class Seq2SeqModel:
                 decoding_helper = seq2seq.SampleEmbeddingHelper(
                     start_tokens=start_tokens,
                     end_token=end_token,
-                    embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
+                    embedding=lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
                 )
             elif self.predict_mode == 'greedy':
                 print 'Building greedy decoder...'
                 decoding_helper = seq2seq.GreedyEmbeddingHelper(
                     start_tokens=start_tokens,
                     end_token=end_token,
-                    embedding= lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
+                    embedding=lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs)
                 )
             else:
-                raise NotImplementedError('Predict mode {} is not yet implemented'.format(self.predict_mode))
+                raise NotImplementedError('Predict mode: {} is not yet implemented'.format(self.predict_mode))
 
             inference_decoder = seq2seq.BasicDecoder(
                 cell=self.decoder_cell,
