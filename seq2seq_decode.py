@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+KEYWORDS = [
+    u'楚',
+    u'收拾',
+    u'思乡',
+    u'相随'
+]
 
 import os
 import math
@@ -58,21 +64,6 @@ def load_config(FLAGS):
 
     return config
 
-# TODO(sdsuo): Fix this stub
-def prepare_batch(vocab):
-    int2ch, ch2int = vocab
-
-    keywords = [
-        u'楚',
-        u'收拾',
-        u'思乡',
-        u'相随'
-    ]
-    for keyword in keywords:
-        source = fill_np_matrix([[ch2int[ch] for ch in keyword]], 1, 5999)
-        source_len = fill_np_array([len(keyword)], 1, 0)
-
-        yield source, source_len
 
 def load_model(session, model, saver):
     if tf.train.checkpoint_exists(FLAGS.model_path):
@@ -108,20 +99,28 @@ def decode():
         # Reload existing checkpoint
         load_model(sess, model, saver)
 
-        for source, source_len in prepare_batch((int2ch, ch2int)):
-            predicted_ids = model.predict(
+        previous = []
+        for keyword in KEYWORDS:
+
+            source = fill_np_matrix([[ch2int[ch] for ch in keyword] + previous], 1, 5999)
+            source_len = fill_np_array([len(source[0])], 1, 0)
+            print 'Using input {}, input length {}'.format(source[0], source_len[0])
+
+            predicted = model.predict(
                 sess,
                 encoder_inputs=source,
                 encoder_inputs_length=source_len
             )
 
-            for id in predicted_ids[0]:
+            # Printing
+            for id in predicted[0]:
                 print int2ch[id[0]],
             print
+
+            previous += [0] + map(lambda x: x[0], predicted[0])[:-1]
+            print 'Previous lines: {}'.format(previous)
 
 def main(_):
     decode()
 
 
-if __name__ == '__main__':
-    tf.app.run()
