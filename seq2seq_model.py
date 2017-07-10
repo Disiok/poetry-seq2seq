@@ -287,7 +287,7 @@ class Seq2SeqModel:
             params=self.embedding,
             ids=self.decoder_inputs_train
         )
-        if self.train_mode == 'ground_true':
+        if self.train_mode == 'ground_truth':
             training_helper = seq2seq.TrainingHelper(
                 inputs=self.decoder_inputs_embedded,
                 sequence_length=self.decoder_inputs_length_train,
