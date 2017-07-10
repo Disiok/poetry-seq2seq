@@ -11,12 +11,12 @@ from seq2seq_model import Seq2SeqModel
 from vocab import get_vocab
 
 # Decoding parameters
-tf.app.flags.DEFINE_integer('beam_width', 1, 'Beam width used in beamsearch')
+tf.app.flags.DEFINE_integer('beam_width', 16, 'Beam width used in beamsearch')
 tf.app.flags.DEFINE_integer('decode_batch_size', 80, 'Batch size used for decoding')
 tf.app.flags.DEFINE_integer('max_decode_step', 500, 'Maximum time step limit to decode')
 tf.app.flags.DEFINE_boolean('write_n_best', False, 'Write n-best list (n=beam_width)')
 tf.app.flags.DEFINE_string('model_path', None, 'Path to a specific model checkpoint.')
-tf.app.flags.DEFINE_string('predict_mode', 'greedy', 'Decode helper to use for predicting')
+tf.app.flags.DEFINE_string('predict_mode', 'beamsearch', 'Decode helper to use for predicting')
 tf.app.flags.DEFINE_string('decode_input', 'data/newstest2012.bpe.de', 'Decoding input path')
 tf.app.flags.DEFINE_string('decode_output', 'data/newstest2012.bpe.de.trans', 'Decoding output path')
 

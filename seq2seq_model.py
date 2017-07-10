@@ -14,6 +14,7 @@ from tensorflow.python.ops.rnn_cell import MultiRNNCell
 from tensorflow.python.ops import array_ops
 from tensorflow.python.layers.core import Dense
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
+from tensorflow.python.util import nest
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -59,13 +60,12 @@ class Seq2SeqModel:
         self.dtype = tf.float16 if config['use_fp16'] else tf.float32
         self.keep_prob_placeholder = tf.placeholder(self.dtype, shape=[], name='keep_prob')
 
-        self.use_beamsearch_decode=False
+        self.predict_mode = 'greedy'
+
         if self.mode == 'predict':
             self.beam_width = config['beam_width']
-            self.use_beamsearch_decode = True if self.beam_width > 1 else False
             self.max_decode_step = config['max_decode_step']
 
-            self.predict_mode = config['predict_mode']
         elif self.mode == 'train':
             self.train_mode = config['train_mode']
             self.sampling_probability = config['sampling_probability']
@@ -226,11 +226,24 @@ class Seq2SeqModel:
                 )
 
     def build_decoder_cell(self):
-        # TODO(sdsuo): Read up and decide whether to use beam search
+        # To use BeamSearchDecoder, encoder_outputs, encoder_last_state, encoder_inputs_length
+        # needs to be tiled so that: [batch_size, .., ..] -> [batch_size x beam_width, .., ..]
+        if self.predict_mode == 'beamsearch':
+            encoder_outputs = seq2seq.tile_batch(
+                self.encoder_outputs, multiplier=self.beam_width)
+            encoder_last_state = nest.map_structure(
+                lambda s: seq2seq.tile_batch(s, self.beam_width), self.encoder_last_state)
+            encoder_inputs_length = seq2seq.tile_batch(
+                self.encoder_inputs_length, multiplier=self.beam_width)
+        else:
+            encoder_outputs = self.encoder_outputs
+            encoder_last_state = self.encoder_last_state
+            encoder_inputs_length = self.encoder_inputs_length
+
         self.attention_mechanism = seq2seq.BahdanauAttention(
             num_units=self.decoder_hidden_units,
-            memory=self.encoder_outputs,
-            memory_sequence_length=self.encoder_inputs_length
+            memory=encoder_outputs,
+            memory_sequence_length=encoder_inputs_length
         )
 
         self.decoder_cell_list = [
@@ -253,7 +266,7 @@ class Seq2SeqModel:
             attention_mechanism=self.attention_mechanism,
             attention_layer_size=self.decoder_hidden_units,
             cell_input_fn=attn_decoder_input_fn,
-            initial_cell_state=self.encoder_last_state[-1],
+            initial_cell_state=encoder_last_state[-1],
             alignment_history=False,
             name='attention_wrapper'
         )
@@ -265,13 +278,13 @@ class Seq2SeqModel:
 
         # Also if beamsearch decoding is used, the batch_size argument in .zero_state
         # should be ${decoder_beam_width} times to the origianl batch_size
-        if self.use_beamsearch_decode:
+        if self.predict_mode == 'beamsearch':
             batch_size = self.batch_size * self.beam_width
         else:
             batch_size = self.batch_size
         # NOTE(vera): important dimension here
         # embed()
-        initial_state = [state for state in self.encoder_last_state]
+        initial_state = [state for state in encoder_last_state]
         initial_state[-1] = self.decoder_cell_list[-1].zero_state(
             batch_size=batch_size,
             dtype=self.dtype
@@ -359,9 +372,19 @@ class Seq2SeqModel:
         start_tokens = tf.ones([self.batch_size,], tf.int32) * self.start_token
         end_token =self.end_token
 
-        if not self.use_beamsearch_decode:
-
-            # Helper to feed inputs for greedy decoding: use the argmax of the output
+        # Helper to feed inputs for greedy decoding: use the argmax of the output
+        if self.predict_mode == 'beamsearch':
+            print 'Building beamsearch decoder with beam width: {}...'.format(self.beam_width)
+            inference_decoder = seq2seq.BeamSearchDecoder(
+                cell=self.decoder_cell,
+                embedding=lambda inputs: tf.nn.embedding_lookup(self.embedding, inputs),
+                start_tokens=start_tokens,
+                end_token=end_token,
+                initial_state=self.decoder_initial_state,
+                beam_width=self.beam_width,
+                output_layer=self.output_layer
+            )
+        else:
             if self.predict_mode == 'sample':
                 print 'Building sample decoder...'
                 decoding_helper = seq2seq.SampleEmbeddingHelper(
@@ -385,9 +408,6 @@ class Seq2SeqModel:
                 initial_state=self.decoder_initial_state,
                 output_layer=self.output_layer
             )
-        else:
-            raise NotImplementedError('Beamsearch decode is not yet implemented.')
-
 
         self.decoder_outputs_decode, self.decoder_last_state_decode,self.decoder_outputs_length_decode = seq2seq.dynamic_decode(
             decoder=inference_decoder,
@@ -395,10 +415,10 @@ class Seq2SeqModel:
             maximum_iterations=self.max_decode_step
         )
 
-        if not self.use_beamsearch_decode:
+        if not self.predict_mode == 'beamsearch':
             self.decoder_pred_decode = tf.expand_dims(self.decoder_outputs_decode.sample_id, -1)
         else:
-            raise NotImplementedError('{} mode is not recognized.'.format(self.mode))
+            self.decoder_pred_decode = self.decoder_outputs_decode.predicted_ids
 
     def build_decoder(self):
         print 'Building decoder...'
