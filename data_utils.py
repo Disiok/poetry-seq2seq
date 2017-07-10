@@ -6,13 +6,14 @@ from segment import Segmenter
 from vocab import *
 from cnt_words import get_pop_quatrains
 from rank_words import get_word_ranks
+from utils import embed_w2v
+from word2vec import get_word_embedding
 import numpy as np
 import shutil
 import random
 
 
 train_path = os.path.join(data_dir, 'train.txt')
-
 kw_train_path = os.path.join(data_dir, 'kw_train.txt')
 
 
@@ -22,6 +23,7 @@ def fill_np_matrix(vects, batch_size, dummy):
     for row, vect in enumerate(vects):
         res[row, :len(vect)] = vect
     return res
+
 
 def fill_np_array(vect, batch_size, dummy):
     res = np.full([batch_size], dummy, dtype = np.int32)
@@ -79,6 +81,96 @@ def get_train_data():
             line = fin.readline()
     return data
 
+def get_keras_train_data():
+    train_data = get_train_data()
+    _, ch2int = get_vocab()
+    
+    X_train = []
+    Y_train = []
+    for idx in xrange(len(train_data)):
+        line_number = idx % 4
+        
+        keyword = train_data[idx]['keyword']
+        current_sentence = train_data[idx]['sentence']
+        previous_sentences = ''.join([train_data[idx - i]['sentence'] for i in range(line_number, 0, -1)])
+        
+        X_entry = pad_to([ch2int[ch] for ch in (keyword + previous_sentences)], 26, 5999)
+        Y_entry = pad_to([ch2int[ch] for ch in current_sentence], 8, 5999)
+        
+        X_train.append(X_entry)
+        Y_train.append(Y_entry)
+        
+    return X_train, Y_train
+
+def gen_keras_one_hot_train_data(batch_size=64):
+    print 'Preparing data'
+    embedding = get_word_embedding(128)
+    X_train, Y_train = get_keras_train_data()
+
+    X_train_embedded = embed_w2v(embedding, X_train)
+    Y_train_one_hot = apply_one_hot(Y_train)
+
+    n_samples = len(X_train)
+
+
+    print 'Data preparation completed'
+    i = 0 
+    while True:
+
+        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_one_hot[i: i + batch_size])
+
+        if i + batch_size > n_samples:
+            i = 0
+        else:
+            i += batch_size
+
+
+def gen_keras_sparse_train_data(batch_size=64):
+    print 'Preparing data'
+    embedding = get_word_embedding(128)
+    X_train, Y_train = get_keras_train_data()
+
+    X_train_embedded = embed_w2v(embedding, X_train)
+    Y_train_one_hot = apply_sparse(Y_train)
+
+    n_samples = len(X_train)
+
+
+    print 'Data preparation completed'
+    i = 0 
+    while True:
+
+        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_one_hot[i: i + batch_size])
+
+        if i + batch_size > n_samples:
+            i = 0
+        else:
+            i += batch_size
+
+
+def gen_keras_train_data(batch_size=64):
+    print 'Preparing data'
+    embedding = get_word_embedding(128)
+    X_train, Y_train = get_keras_train_data()
+
+    X_train_embedded = embed_w2v(embedding, X_train)
+    Y_train_embedded = embed_w2v(embedding, Y_train)
+
+    n_samples = len(X_train)
+
+
+    print 'Data preparation completed'
+    i = 0 
+    while True:
+
+        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_embedded[i: i + batch_size])
+
+        if i + batch_size > n_samples:
+            i = 0
+        else:
+            i += batch_size
+
+
 def get_kw_train_data():
     if not os.path.exists(kw_train_path):
         _gen_train_data()
@@ -92,6 +184,17 @@ def get_kw_train_data():
 
 
 def batch_train_data(batch_size):
+    """Get training data in poem, batch major format
+
+    Args:
+        batch_size:
+
+    Returns:
+        kw_mats: [4, batch_size, time_steps]
+        kw_lens: [4, batch_size]
+        s_mats: [4, batch_size, time_steps]
+        s_lens: [4, batch_size]
+    """
     if not os.path.exists(train_path):
         _gen_train_data()
     _, ch2int = get_vocab()
@@ -100,16 +203,19 @@ def batch_train_data(batch_size):
         while not stop:
             batch_s = [[] for _ in range(4)]
             batch_kw = [[] for _ in range(4)]
-            for i in range(batch_size):
+            # NOTE(sdsuo): Modified batch size to remove empty lines in batches
+            for i in range(batch_size * 4):
                 line = fin.readline()
                 if not line:
                     stop = True
                     break
                 else:
                     toks = line.strip().split('\t')
-                    batch_s[i%4].append([0]+[ch2int[ch] for ch in toks[0]]+[VOCAB_SIZE-1])
+                    # NOTE(sdsuo): Removed start token
+                    batch_s[i%4].append([ch2int[ch] for ch in toks[0]])
                     batch_kw[i%4].append([ch2int[ch] for ch in toks[1]])
-            if 0 == len(batch_s[0]):
+            if batch_size != len(batch_s[0]):
+                print 'Batch incomplete with size {}, expecting size {}, dropping batch.'.format(len(batch_s[0]), batch_size)
                 break
             else:
                 kw_mats = [fill_np_matrix(batch_kw[i], batch_size, VOCAB_SIZE-1) \
@@ -118,9 +224,77 @@ def batch_train_data(batch_size):
                         for i in range(4)]
                 s_mats = [fill_np_matrix(batch_s[i], batch_size, VOCAB_SIZE-1) \
                         for i in range(4)]
-                s_lens = [fill_np_array([len(x)-1 for x in batch_s[i]], batch_size, 0) \
+                s_lens = [fill_np_array([len(x) for x in batch_s[i]], batch_size, 0) \
                         for i in range(4)]
                 yield kw_mats, kw_lens, s_mats, s_lens
+
+
+def batch_train_data_with_prev(batch_size):
+    """Get training data in poem, batch major format
+
+    Args:
+        batch_size:
+
+    Returns:
+        source: [batch_size, time_steps]: keywords + SEP + previous sentences
+        source_lens: [batch_size]: length of source
+        target: [batch_size, time_steps]: current sentence
+        target_lens: [batch_size]: length of target
+    """
+    if not os.path.exists(train_path):
+        _gen_train_data()
+    _, ch2int = get_vocab()
+
+    def sentence_to_ints(sentence):
+        return [ch2int[ch] for ch in sentence]
+
+    SEP = 0
+    PAD = 5999
+
+    with codecs.open(train_path, 'r', 'utf-8') as fin:
+        stop = False
+        while not stop:
+            source = []
+            source_lens = []
+            target = []
+            target_lens = []
+
+            previous_sentences_ints = []
+            for i in range(batch_size):
+                line = fin.readline()
+                if not line:
+                    stop = True
+                    break
+                else:
+                    line_number = i % 4
+                    if line_number == 0:
+                        previous_sentences_ints = []
+
+                    current_sentence, keywords = line.strip().split('\t')
+
+                    current_sentence_ints = sentence_to_ints(current_sentence)
+                    keywords_ints = sentence_to_ints(keywords)
+                    source_ints = keywords_ints + previous_sentences_ints
+
+                    target.append(current_sentence_ints)
+                    target_lens.append(len(current_sentence_ints))
+
+                    source.append(source_ints)
+                    source_lens.append(len(source_ints))
+
+                    # Always append to previous sentences
+                    previous_sentences_ints += [SEP] + current_sentence_ints
+
+
+            if len(source) == batch_size:
+                source_padded = fill_np_matrix(source, batch_size, PAD)
+                target_padded = fill_np_matrix(target, batch_size, PAD)
+                source_lens = np.array(source_lens)
+                target_lens = np.array(target_lens)
+
+                yield source_padded, source_lens, target_padded, target_lens
+            else:
+                break
 
 
 if __name__ == '__main__':

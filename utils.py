@@ -7,17 +7,37 @@ import os
 import json
 import random
 import numpy as np
+# from keras.utils.np_utils import to_categorical
 
+VOCAB_SIZE = 6000
 
 raw_dir = 'raw'
 data_dir = 'data'
 save_dir = 'save'
+log_dir = 'log'
 
 if not os.path.exists(data_dir):
     os.mkdir(data_dir)
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
+def embed_w2v(embedding, data_set):
+    embedded = [map(lambda x: embedding[x], sample) for sample in data_set]
+    return embedded
+
+def apply_one_hot(data_set):
+    applied = [map(lambda x: to_categorical(x, num_classes=VOCAB_SIZE)[0], sample) for sample in data_set]
+    return applied
+
+def apply_sparse(data_set):
+    applied = [map(lambda x: [x], sample) for sample in data_set]
+    return applied
+
+def pad_to(lst, length, value):
+    for i in range(len(lst), length):
+        lst.append(value)
+    
+    return lst
 
 def uprint(x):
     print repr(x).decode('unicode-escape'),

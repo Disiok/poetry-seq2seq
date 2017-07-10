@@ -3,12 +3,12 @@
 
 from utils import *
 from data_utils import *
-from generate import Generator
+from generate_keras import CategoricalGenerator
 from time import sleep
 
 
 if __name__ == '__main__':
-    generator = Generator()
+    generator = CategoricalGenerator()
     learn_rate = 0.002
     decay_rate = 0.97
     epoch_no = 0

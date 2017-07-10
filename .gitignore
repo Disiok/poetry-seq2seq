@@ -2,4 +2,8 @@
 show.py
 data/
 save/
+model/
+log/
 .backup/
+.idea/
+.ipynb_checkpoints/
