@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import tensorflow as tf
 
-from data_utils import batch_train_data_with_prev
+from data_utils import gen_batch_train_data
 from seq2seq_model import Seq2SeqModel
 from word2vec import get_word_embedding
 
@@ -121,7 +121,7 @@ def train():
 
             # Prepare batch training data
             # TODO(sdsuo): Make corresponding changes in data_utils
-            for source, source_len, target, target_len in batch_train_data_with_prev(FLAGS.batch_size):
+            for source, source_len, target, target_len in gen_batch_train_data(FLAGS.batch_size, prev=True, rev=True, align=True):
                 step_loss, summary = model.train(
                     sess,
                     encoder_inputs=source,

@@ -229,8 +229,10 @@ def batch_train_data(batch_size):
                 yield kw_mats, kw_lens, s_mats, s_lens
 
 
-def batch_train_data_with_prev(batch_size):
-    """Get training data in poem, batch major format
+def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
+    """
+    Get training data in batch major format, with keyword and previous sentences as source,
+    aligned and reversed
 
     Args:
         batch_size:
@@ -241,15 +243,24 @@ def batch_train_data_with_prev(batch_size):
         target: [batch_size, time_steps]: current sentence
         target_lens: [batch_size]: length of target
     """
+    SEP = 0
+    PAD = 5999
+
     if not os.path.exists(train_path):
         _gen_train_data()
     _, ch2int = get_vocab()
 
-    def sentence_to_ints(sentence):
-        return [ch2int[ch] for ch in sentence]
 
-    SEP = 0
-    PAD = 5999
+    def sentence_to_ints(sentence, rev=False, pad_len=None):
+        if rev:
+            sentence = reversed(sentence)
+        result = [ch2int[ch] for ch in sentence]
+
+        if pad_len is not None:
+            result_len = len(result)
+            for i in range(pad_len - result_len):
+                result.append(PAD)
+        return result
 
     with codecs.open(train_path, 'r', 'utf-8') as fin:
         stop = False
@@ -272,9 +283,9 @@ def batch_train_data_with_prev(batch_size):
 
                     current_sentence, keywords = line.strip().split('\t')
 
-                    current_sentence_ints = sentence_to_ints(current_sentence)
-                    keywords_ints = sentence_to_ints(keywords)
-                    source_ints = keywords_ints + previous_sentences_ints
+                    current_sentence_ints = sentence_to_ints(current_sentence, rev=rev, pad_len=7 if align else None)
+                    keywords_ints = sentence_to_ints(keywords, rev=rev, pad_len=4 if align else None)
+                    source_ints = keywords_ints + previous_sentences_ints if prev else []
 
                     target.append(current_sentence_ints)
                     target_lens.append(len(current_sentence_ints))
@@ -284,7 +295,6 @@ def batch_train_data_with_prev(batch_size):
 
                     # Always append to previous sentences
                     previous_sentences_ints += [SEP] + current_sentence_ints
-
 
             if len(source) == batch_size:
                 source_padded = fill_np_matrix(source, batch_size, PAD)
