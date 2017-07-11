@@ -1,34 +1,35 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
-from segment import Segmenter
-from vocab import *
-from cnt_words import get_pop_quatrains
-from rank_words import get_word_ranks
-from utils import embed_w2v
-from word2vec import get_word_embedding
-import numpy as np
-import shutil
+import codecs
+import os
 import random
 
+import numpy as np
+
+from cnt_words import get_pop_quatrains
+from rank_words import get_word_ranks
+from segment import Segmenter
+from utils import embed_w2v, data_dir, apply_one_hot, apply_sparse, pad_to, SEP_TOKEN, PAD_TOKEN
+from vocab import get_vocab, VOCAB_SIZE
+from word2vec import get_word_embedding
 
 train_path = os.path.join(data_dir, 'train.txt')
 kw_train_path = os.path.join(data_dir, 'kw_train.txt')
 
 
-def fill_np_matrix(vects, batch_size, dummy):
+def fill_np_matrix(vects, batch_size, value):
     max_len = max(len(vect) for vect in vects)
-    res = np.full([batch_size, max_len], dummy, dtype = np.int32)
+    res = np.full([batch_size, max_len], value, dtype=np.int32)
     for row, vect in enumerate(vects):
         res[row, :len(vect)] = vect
     return res
 
 
-def fill_np_array(vect, batch_size, dummy):
-    res = np.full([batch_size], dummy, dtype = np.int32)
-    res[:len(vect)] = vect
-    return res
+def fill_np_array(vect, batch_size, value):
+    result = np.full([batch_size], value, dtype=np.int32)
+    result[:len(vect)] = vect
+    return result
 
 
 def _gen_train_data():
@@ -243,15 +244,11 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
         target: [batch_size, time_steps]: current sentence
         target_lens: [batch_size]: length of target
     """
-    SEP = 0
-    PAD = 5999
-
     if not os.path.exists(train_path):
         _gen_train_data()
     _, ch2int = get_vocab()
 
-
-    def sentence_to_ints(sentence, rev=False, pad_len=None):
+    def sentence_to_ints(sentence, rev=False, pad_len=None, pad_token=PAD_TOKEN):
         if rev:
             sentence = reversed(sentence)
         result = [ch2int[ch] for ch in sentence]
@@ -259,7 +256,7 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
         if pad_len is not None:
             result_len = len(result)
             for i in range(pad_len - result_len):
-                result.append(PAD)
+                result.append(pad_token)
         return result
 
     with codecs.open(train_path, 'r', 'utf-8') as fin:
@@ -294,11 +291,11 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
                     source_lens.append(len(source_ints))
 
                     # Always append to previous sentences
-                    previous_sentences_ints += [SEP] + current_sentence_ints
+                    previous_sentences_ints += [SEP_TOKEN] + current_sentence_ints
 
             if len(source) == batch_size:
-                source_padded = fill_np_matrix(source, batch_size, PAD)
-                target_padded = fill_np_matrix(target, batch_size, PAD)
+                source_padded = fill_np_matrix(source, batch_size, PAD_TOKEN)
+                target_padded = fill_np_matrix(target, batch_size, PAD_TOKEN)
                 source_lens = np.array(source_lens)
                 target_lens = np.array(target_lens)
 
@@ -307,10 +304,13 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
                 break
 
 
-if __name__ == '__main__':
+def main():
     train_data = get_train_data()
     print "Size of the training data: %d" %len(train_data)
     kw_train_data = get_kw_train_data()
     print "Size of the keyword training data: %d" %len(kw_train_data)
     assert len(train_data) == 4*len(kw_train_data)
 
+
+if __name__ == '__main__':
+    main()

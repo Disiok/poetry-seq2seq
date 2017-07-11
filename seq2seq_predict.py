@@ -95,7 +95,7 @@ class Seq2SeqPredictor:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.sess.close()
 
-    def predict(self, keywords):
+    def predict(self, keywords, rev=True):
         sentences = []
         previous = []
         for keyword in keywords:

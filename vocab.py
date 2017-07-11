@@ -1,13 +1,16 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
+import os
+import codecs
+import json
+
+from utils import VOCAB_SIZE, data_dir, uprint
 from corpus import get_all_corpus
 
 
 _vocab_path = os.path.join(data_dir, 'vocab.json')
 
-VOCAB_SIZE = 6000
 
 def _gen_vocab():
     print "Generating the vocabulary ..."
@@ -35,11 +38,12 @@ def get_vocab():
     ch2int = dict((ch, idx) for idx, ch in enumerate(int2ch))
     return int2ch, ch2int
 
-
-if __name__ == '__main__':
+def main():
     int2ch, _ = get_vocab()
     print "Size of the vocabulary: %d" % len(int2ch)
     for ch in int2ch[:100]:
         uprint(ch)
     print
 
+if __name__ == '__main__':
+    main()
