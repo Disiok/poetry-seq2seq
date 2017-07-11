@@ -10,7 +10,7 @@ import jieba
 from gensim import models
 from random import shuffle, random, randint
 
-_model_path = os.path.join(data_dir, 'kw_model.bin')
+_model_path = os.path.join(DATA_PROCESSED_DIR, 'kw_model.bin')
 
 
 class Planner:

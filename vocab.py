@@ -5,11 +5,11 @@ import os
 import codecs
 import json
 
-from utils import VOCAB_SIZE, data_dir, uprint
+from utils import VOCAB_SIZE, DATA_PROCESSED_DIR, uprint
 from corpus import get_all_corpus
 
 
-_vocab_path = os.path.join(data_dir, 'vocab.json')
+_vocab_path = os.path.join(DATA_PROCESSED_DIR, 'vocab.json')
 
 
 def _gen_vocab():

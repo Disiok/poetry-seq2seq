@@ -4,19 +4,20 @@
 import os
 
 VOCAB_SIZE = 6000
-
 SEP_TOKEN = 0
 PAD_TOKEN = 5999
 
-raw_dir = 'raw'
-data_dir = 'data'
-save_dir = 'save'
-log_dir = 'log'
 
-if not os.path.exists(data_dir):
-    os.mkdir(data_dir)
-if not os.path.exists(save_dir):
-    os.mkdir(save_dir)
+DATA_RAW_DIR = 'data/raw'
+DATA_PROCESSED_DIR = 'data/processed'
+MODEL_DIR = 'model'
+LOG_DIR = 'log'
+
+
+if not os.path.exists(DATA_PROCESSED_DIR):
+    os.mkdir(DATA_PROCESSED_DIR)
+if not os.path.exists(MODEL_DIR):
+    os.mkdir(MODEL_DIR)
 
 
 def embed_w2v(embedding, data_set):

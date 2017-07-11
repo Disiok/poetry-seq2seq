@@ -8,8 +8,8 @@ from quatrains import get_quatrains
 from gensim import models
 from numpy.random import uniform
 
-_w2v_path = os.path.join(data_dir, 'word2vec.npy')
-_w2v_model_path = os.path.join(data_dir, 'word2vec.model')
+_w2v_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.npy')
+_w2v_model_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.model')
 
 def _gen_embedding(ndim):
     print "Generating %d-dim word embedding ..." %ndim

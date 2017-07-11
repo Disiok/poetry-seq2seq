@@ -10,12 +10,12 @@ import numpy as np
 from cnt_words import get_pop_quatrains
 from rank_words import get_word_ranks
 from segment import Segmenter
-from utils import embed_w2v, data_dir, apply_one_hot, apply_sparse, pad_to, SEP_TOKEN, PAD_TOKEN
+from utils import embed_w2v, DATA_PROCESSED_DIR, apply_one_hot, apply_sparse, pad_to, SEP_TOKEN, PAD_TOKEN
 from vocab import get_vocab, VOCAB_SIZE
 from word2vec import get_word_embedding
 
-train_path = os.path.join(data_dir, 'train.txt')
-kw_train_path = os.path.join(data_dir, 'kw_train.txt')
+train_path = os.path.join(DATA_PROCESSED_DIR, 'train.txt')
+kw_train_path = os.path.join(DATA_PROCESSED_DIR, 'kw_train.txt')
 
 
 def fill_np_matrix(vects, batch_size, value):

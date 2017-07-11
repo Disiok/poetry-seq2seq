@@ -5,7 +5,7 @@ from utils import *
 from segment import Segmenter
 from quatrains import get_quatrains
 
-_wc_path = os.path.join(data_dir, 'word_cnts.json')
+_wc_path = os.path.join(DATA_PROCESSED_DIR, 'word_cnts.json')
 
 
 def _gen_word_cnts():

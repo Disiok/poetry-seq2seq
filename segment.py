@@ -5,8 +5,8 @@ from utils import *
 import jieba
 
 
-sxhy_raw = os.path.join(raw_dir, 'shixuehanying.txt')
-sxhy_path = os.path.join(data_dir, 'sxhy_dict.txt')
+sxhy_raw = os.path.join(DATA_RAW_DIR, 'shixuehanying.txt')
+sxhy_path = os.path.join(DATA_PROCESSED_DIR, 'sxhy_dict.txt')
 
 def _gen_sxhy_dict():
     sxhy_dict = dict()
