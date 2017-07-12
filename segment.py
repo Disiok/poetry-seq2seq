@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
+import os
+import codecs
 import jieba
+
+from utils import DATA_RAW_DIR, DATA_PROCESSED_DIR
 
 
 sxhy_raw = os.path.join(DATA_RAW_DIR, 'shixuehanying.txt')
