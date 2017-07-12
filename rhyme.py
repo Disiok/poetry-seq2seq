@@ -6,9 +6,9 @@ import struct
 import pypinyin
 
 
-py_raw = os.path.join(raw_dir, 'pinyin.txt')
+py_raw = os.path.join(DATA_RAW_DIR, 'pinyin.txt')
 
-_rhy_path = os.path.join(data_dir, 'rhy_dict.json')
+_rhy_path = os.path.join(DATA_PROCESSED_DIR, 'rhy_dict.json')
 
 
 _VOWELS = ['A', 'O', 'E', 'I', 'U', 'V']

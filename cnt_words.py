@@ -1,11 +1,15 @@
 #! /usr/bin/env python
 #-*- coding: utf-8 -*-
 
-from utils import *
+import os
+import codecs
+import json
+
+from utils import DATA_PROCESSED_DIR, uprintln
 from segment import Segmenter
 from quatrains import get_quatrains
 
-_wc_path = os.path.join(data_dir, 'word_cnts.json')
+_wc_path = os.path.join(DATA_PROCESSED_DIR, 'word_cnts.json')
 
 
 def _gen_word_cnts():

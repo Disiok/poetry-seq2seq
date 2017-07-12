@@ -1,17 +1,18 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
-from segment import Segmenter
+import os
+from utils import DATA_PROCESSED_DIR
+import numpy as np
 from vocab import get_vocab, VOCAB_SIZE
 from quatrains import get_quatrains
 from gensim import models
 from numpy.random import uniform
 
-_w2v_path = os.path.join(data_dir, 'word2vec.npy')
-_w2v_model_path = os.path.join(data_dir, 'word2vec.model')
-_w2v_with_alignment_path = os.path.join(data_dir, 'word2vec_with_alignment.npy')
-_w2v_with_alignment_model_path = os.path.join(data_dir, 'word2vec_with_alignment.model')
+_w2v_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.npy')
+_w2v_model_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.model')
+_w2v_with_alignment_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec_with_alignment.npy')
+_w2v_with_alignment_model_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec_with_alignment.model')
 
 def _gen_embedding(ndim, alignment=False):
     print "Generating %d-dim word embedding ..." %ndim

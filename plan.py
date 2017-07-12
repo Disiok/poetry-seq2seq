@@ -1,16 +1,20 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
-from segment import Segmenter
-from quatrains import get_quatrains
-from rank_words import get_word_ranks
-from data_utils import *
+import os
+
 import jieba
 from gensim import models
 from random import shuffle, random, randint
 
-_model_path = os.path.join(data_dir, 'kw_model.bin')
+from utils import uprintln, uprint, DATA_PROCESSED_DIR, split_sentences
+from data_utils import get_kw_train_data
+from segment import Segmenter
+from quatrains import get_quatrains
+from rank_words import get_word_ranks
+
+
+_model_path = os.path.join(DATA_PROCESSED_DIR, 'kw_model.bin')
 
 
 class Planner:

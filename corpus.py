@@ -1,7 +1,12 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
+import codecs
+import sys
+import os
+import json
+
+from utils import DATA_PROCESSED_DIR, DATA_RAW_DIR, split_sentences
 from rhyme import RhymeDict
 
 
@@ -53,12 +58,12 @@ def _parse_corpus(raw_file, json_file):
 def get_all_corpus():
     corpus = []
     for raw in _corpus_list:
-        json_file = os.path.join(data_dir, raw.replace('all', 'json').replace('txt', 'json'))
+        json_file = os.path.join(DATA_PROCESSED_DIR, raw.replace('all', 'json').replace('txt', 'json'))
         try:
             with codecs.open(json_file, 'r', 'utf-8') as fin:
                 data = json.load(fin)
         except IOError:
-            data = _parse_corpus(os.path.join(raw_dir, raw), json_file)
+            data = _parse_corpus(os.path.join(DATA_RAW_DIR, raw), json_file)
         finally:
             corpus.extend(data)
     return corpus

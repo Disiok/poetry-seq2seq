@@ -7,14 +7,8 @@ from IPython import embed
 
 # framework
 import tensorflow as tf
-from tensorflow.contrib import seq2seq
-
-from tensorflow.python.ops.rnn_cell import GRUCell
-from tensorflow.python.ops.rnn_cell import MultiRNNCell
-from tensorflow.python.ops import array_ops
+from tensorflow.contrib import seq2seq, rnn
 from tensorflow.python.layers.core import Dense
-from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
-
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -161,9 +155,9 @@ class Seq2SeqModel:
 
     def build_single_cell(self, hidden_units):
         if self.cell_type == 'gru':
-            cell_type = GRUCell
+            cell_type = rnn.GRUCell
         elif self.cell_type == 'lstm':
-            cell_type = LSTMCell
+            cell_type = rnn.LSTMCell
         else:
             raise RuntimeError('Unknown cell type!')
         cell = cell_type(hidden_units)
@@ -171,7 +165,7 @@ class Seq2SeqModel:
         return cell
 
     def build_encoder_cell(self):
-        multi_cell = MultiRNNCell([self.build_single_cell(self.hidden_units) for _ in range(self.depth)])
+        multi_cell = rnn.MultiRNNCell([self.build_single_cell(self.hidden_units) for _ in range(self.depth)])
 
         return multi_cell
 
@@ -208,7 +202,7 @@ class Seq2SeqModel:
                 self.encoder_last_state_fw, self.encoder_last_state_bw = self.encoder_last_state_fw_bw
 
                 encoder_last_state_zipped = zip(self.encoder_last_state_fw, self.encoder_last_state_bw)
-                encoder_last_state_list = [LSTMStateTuple(c=tf.concat([fw.c, bw.c], 1), h=tf.concat([fw.h, bw.h], 1))
+                encoder_last_state_list = [rnn.LSTMStateTuple(c=tf.concat([fw.c, bw.c], 1), h=tf.concat([fw.h, bw.h], 1))
                                            for fw, bw in encoder_last_state_zipped]
                 self.encoder_last_state = tuple(encoder_last_state_list)
             else:
@@ -245,7 +239,7 @@ class Seq2SeqModel:
             # Essential when use_residual=True
             _input_layer = Dense(self.decoder_hidden_units, dtype=self.dtype,
                                  name='attn_input_feeding')
-            return _input_layer(array_ops.concat([inputs, attention], -1))
+            return _input_layer(rnn.array_ops.concat([inputs, attention], -1))
 
         # NOTE(sdsuo): Attention mechanism is implemented only on the top decoder layer
         self.decoder_cell_list[-1] = seq2seq.AttentionWrapper(
@@ -279,7 +273,7 @@ class Seq2SeqModel:
         decoder_initial_state = tuple(initial_state)
 
 
-        return MultiRNNCell(self.decoder_cell_list), decoder_initial_state
+        return rnn.MultiRNNCell(self.decoder_cell_list), decoder_initial_state
 
 
     def build_train_decoder(self):

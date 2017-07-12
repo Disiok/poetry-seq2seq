@@ -1,14 +1,18 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
+import codecs
+import os
+import json
+
+from utils import DATA_RAW_DIR, DATA_PROCESSED_DIR
 from segment import Segmenter, get_sxhy_dict
 from quatrains import get_quatrains
 
 
-stopwords_raw = os.path.join(raw_dir, 'stopwords.txt')
+stopwords_raw = os.path.join(DATA_RAW_DIR, 'stopwords.txt')
 
-rank_path = os.path.join(data_dir, 'word_ranks.json')
+rank_path = os.path.join(DATA_PROCESSED_DIR, 'word_ranks.json')
 
 
 def get_stopwords():

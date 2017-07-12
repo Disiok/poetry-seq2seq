@@ -9,7 +9,8 @@ from collections import OrderedDict
 
 import tensorflow as tf
 
-from data_utils import batch_train_data_with_prev
+from utils import SEP_TOKEN, PAD_TOKEN, VOCAB_SIZE, MODEL_DIR
+from data_utils import gen_batch_train_data
 from seq2seq_model import Seq2SeqModel
 from word2vec import get_word_embedding
 
@@ -30,7 +31,7 @@ tf.app.flags.DEFINE_integer('embedding_size', 128, 'Embedding dimensions of enco
 tf.app.flags.DEFINE_integer('num_encoder_symbols', 30000, 'Source vocabulary size')
 tf.app.flags.DEFINE_integer('num_decoder_symbols', 30000, 'Target vocabulary size')
 # NOTE(sdsuo): We used the same vocab for source and target
-tf.app.flags.DEFINE_integer('vocab_size', 6000, 'General vocabulary size')
+tf.app.flags.DEFINE_integer('vocab_size', VOCAB_SIZE, 'General vocabulary size')
 
 tf.app.flags.DEFINE_boolean('use_residual', True, 'Use residual connection between layers')
 tf.app.flags.DEFINE_boolean('attn_input_feeding', False, 'Use input feeding method in attentional decoder')
@@ -48,7 +49,7 @@ tf.app.flags.DEFINE_integer('display_freq', 100, 'Display training status every 
 tf.app.flags.DEFINE_integer('save_freq', 100, 'Save model checkpoint every this iteration')
 tf.app.flags.DEFINE_integer('valid_freq', 1150000, 'Evaluate model every this iteration: valid_data needed')
 tf.app.flags.DEFINE_string('optimizer', 'adam', 'Optimizer for training: (adadelta, adam, rmsprop)')
-tf.app.flags.DEFINE_string('model_dir', 'model/', 'Path to save model checkpoints')
+tf.app.flags.DEFINE_string('model_dir', MODEL_DIR, 'Path to save model checkpoints')
 tf.app.flags.DEFINE_string('summary_dir', 'model/summary', 'Path to save model summary')
 tf.app.flags.DEFINE_string('model_name', 'translate.ckpt', 'File name used for model checkpoints')
 tf.app.flags.DEFINE_boolean('shuffle_each_epoch', True, 'Shuffle training dataset for each epoch')
@@ -59,8 +60,8 @@ tf.app.flags.DEFINE_string('train_mode', 'ground_truth', 'Decode helper to use f
 tf.app.flags.DEFINE_string('sampling_probability', 0.1, 'Probability of sampling from decoder output instead of using ground truth')
 
 # TODO(sdsuo): Make start token and end token more robust
-tf.app.flags.DEFINE_integer('start_token', 0, 'Start token')
-tf.app.flags.DEFINE_integer('end_token', 5999, 'End token')
+tf.app.flags.DEFINE_integer('start_token', SEP_TOKEN, 'Start token')
+tf.app.flags.DEFINE_integer('end_token', PAD_TOKEN, 'End token')
 
 # Runtime parameters
 tf.app.flags.DEFINE_boolean('allow_soft_placement', True, 'Allow device soft placement')
@@ -121,7 +122,7 @@ def train():
 
             # Prepare batch training data
             # TODO(sdsuo): Make corresponding changes in data_utils
-            for source, source_len, target, target_len in batch_train_data_with_prev(FLAGS.batch_size):
+            for source, source_len, target, target_len in gen_batch_train_data(FLAGS.batch_size, prev=True, rev=True, align=True):
                 step_loss, summary = model.train(
                     sess,
                     encoder_inputs=source,

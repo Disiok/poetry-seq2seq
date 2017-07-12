@@ -23,7 +23,7 @@ from recurrentshop import RecurrentSequential
 from vocab import get_vocab
 from data_utils import get_train_data
 from word2vec import get_word_embedding, _w2v_model_path
-from utils import pad_to, save_dir, log_dir
+from utils import pad_to, save_dir, LOG_DIR
 from data_utils import gen_keras_sparse_train_data
 
 
@@ -80,7 +80,7 @@ class MSEGenerator:
               decay_rate = _DECAY_RATE):
 
         # prepare callbacks
-        tensorboard_callback = TensorBoard(log_dir=log_dir)
+        tensorboard_callback = TensorBoard(log_dir=LOG_DIR)
         modelcheckpoint_callback = ModelCheckpoint(filepath=_model_path, verbose=1, save_weights_only=True)
 
         # train
@@ -140,7 +140,7 @@ class CategoricalGenerator:
               decay_rate = _DECAY_RATE):
 
         # prepare callbacks
-        tensorboard_callback = TensorBoard(log_dir=log_dir)
+        tensorboard_callback = TensorBoard(log_dir=LOG_DIR)
         modelcheckpoint_callback = ModelCheckpoint(filepath=_model_path, verbose=1, save_weights_only=True)
 
         # train

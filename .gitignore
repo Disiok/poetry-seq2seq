@@ -1,6 +1,6 @@
 *.pyc
 show.py
-data/
+data/processed/
 save/
 model/
 log/

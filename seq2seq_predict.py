@@ -6,9 +6,9 @@ import json
 
 import tensorflow as tf
 
-from data_utils import fill_np_array, fill_np_matrix
+from data_utils import prepare_batch_predict_data
 from seq2seq_model import Seq2SeqModel
-from vocab import get_vocab
+from vocab import get_vocab, ints_to_sentence
 
 # Decoding parameters
 tf.app.flags.DEFINE_integer('beam_width', 1, 'Beam width used in beamsearch')
@@ -68,9 +68,6 @@ class Seq2SeqPredictor:
         # Load model config
         config = load_config(FLAGS)
 
-        # Get vocab
-        self.int2ch, self.ch2int = get_vocab()
-
         config_proto = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement,
@@ -95,21 +92,26 @@ class Seq2SeqPredictor:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.sess.close()
 
-    def predict(self, keywords):
+    def predict(self, keywords, prev=True, rev=True, align=True):
         sentences = []
-        previous = []
         for keyword in keywords:
-            source = fill_np_matrix([[self.ch2int[ch] for ch in keyword] + previous], 1, 5999)
-            source_len = fill_np_array([len(source[0])], 1, 0)
+            source, source_len = prepare_batch_predict_data(keyword, previous=sentences, prev=prev, rev=rev, align=align)
 
-            predicted = self.model.predict(
+            predicted_batch = self.model.predict(
                 self.sess,
                 encoder_inputs=source,
                 encoder_inputs_length=source_len
             )
 
-            sentences.append(''.join(map(lambda x: self.int2ch[x[0]], predicted[0])[:-1]))
-            previous += [0] + map(lambda x: x[0], predicted[0])[:-1]
+            predicted_line = predicted_batch[0] # predicted is a batch of one line
+            predicted_line_clean = predicted_line[:-1] # remove the end token
+            predicted_ints = map(lambda x: x[0], predicted_line_clean) # Flatten from [time_step, 1] to [time_step]
+            predicted_sentence = ints_to_sentence(predicted_ints)
+
+            if rev:
+                predicted_sentence = predicted_sentence[::-1]
+
+            sentences.append(predicted_sentence)
         return sentences
 
 
