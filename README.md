@@ -32,6 +32,7 @@ Python 2.7
 
 [Gensim 2.0.0](https://radimrehurek.com/gensim/)
 
+[pypinyin 0.23](https://pypi.python.org/pypi/pypinyin)
 
 ## Training
 
