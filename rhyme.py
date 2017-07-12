@@ -3,6 +3,7 @@
 
 from utils import *
 import struct
+import pypinyin
 
 
 py_raw = os.path.join(raw_dir, 'pinyin.txt')
@@ -19,8 +20,7 @@ def _get_vowels(pinyin):
         i -= 1
     return pinyin[i+1:]
 
-def _get_rhyme(pinyin):
-    vowels = _get_vowels(pinyin)
+def _get_rhyme(vowels):
     if vowels in ['A', 'IA', 'UA']:
         return 1
     elif vowels in ['O', 'E', 'UO']:
@@ -45,9 +45,9 @@ def _get_rhyme(pinyin):
         return 11
     elif vowels in ['ONG', 'IONG']:
         return 12
-    elif (vowels == 'I' and not pinyin[0] in ['Z', 'C', 'S', 'R']) \
-            or vowels == 'V':
-        return 13
+    # elif (vowels == 'I' and not pinyin[0] in ['Z', 'C', 'S', 'R']) \
+    #         or vowels == 'V':
+    #     return 13
     elif vowels == 'I':
         return 14
     elif vowels == 'U':
@@ -87,7 +87,8 @@ class RhymeDict:
         return ch in self.ch2rhy
 
     def get_rhyme(self, ch):
-        return self.ch2rhy[ch][0]
+        vowels = pypinyin.pinyin(ch, style=pypinyin.FINALS, heteronym=False, errors=u'default')[0][0].upper()
+        return _get_rhyme(vowels)
 
     def get_tone(self, ch):
         if 1 <= self.ch2rhy[ch][1] <= 2:
