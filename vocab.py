@@ -38,12 +38,32 @@ def get_vocab():
     ch2int = dict((ch, idx) for idx, ch in enumerate(int2ch))
     return int2ch, ch2int
 
+
+int2ch, ch2int = get_vocab()
+
+
+def int_to_ch(i):
+    return int2ch[i]
+
+
+def ch_to_int(ch):
+    return ch2int[ch]
+
+
+def sentence_to_ints(sentence):
+    return map(ch_to_int, sentence)
+
+
+def ints_to_sentence(ints):
+    return ''.join(map(int_to_ch, ints))
+
+
 def main():
     int2ch, _ = get_vocab()
-    print "Size of the vocabulary: %d" % len(int2ch)
+    print "Size of the vocabulary: {}".format(len(int2ch))
     for ch in int2ch[:100]:
         uprint(ch)
-    print
+
 
 if __name__ == '__main__':
     main()

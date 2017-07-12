@@ -11,7 +11,7 @@ from cnt_words import get_pop_quatrains
 from rank_words import get_word_ranks
 from segment import Segmenter
 from utils import embed_w2v, DATA_PROCESSED_DIR, apply_one_hot, apply_sparse, pad_to, SEP_TOKEN, PAD_TOKEN
-from vocab import get_vocab, VOCAB_SIZE
+from vocab import ch2int, VOCAB_SIZE, sentence_to_ints
 from word2vec import get_word_embedding
 
 train_path = os.path.join(DATA_PROCESSED_DIR, 'train.txt')
@@ -84,7 +84,6 @@ def get_train_data():
 
 def get_keras_train_data():
     train_data = get_train_data()
-    _, ch2int = get_vocab()
     
     X_train = []
     Y_train = []
@@ -198,7 +197,6 @@ def batch_train_data(batch_size):
     """
     if not os.path.exists(train_path):
         _gen_train_data()
-    _, ch2int = get_vocab()
     with codecs.open(train_path, 'r', 'utf-8') as fin:
         stop = False
         while not stop:
@@ -230,31 +228,35 @@ def batch_train_data(batch_size):
                 yield kw_mats, kw_lens, s_mats, s_lens
 
 
+def process_sentence(sentence, rev=False, pad_len=None, pad_token=PAD_TOKEN):
+    if rev:
+        sentence = sentence[::-1]
+
+    sentence_ints = sentence_to_ints(sentence)
+
+    if pad_len is not None:
+        result_len = len(sentence_ints)
+        for i in range(pad_len - result_len):
+            sentence_ints.append(pad_token)
+
+    return sentence_ints
+
+
 def prepare_batch_predict_data(keyword, previous=[], prev=True, rev=False, align=False):
-    _, ch2int = get_vocab()
-
-    def sentence_to_ints(sentence, rev=False, pad_len=None, pad_token=PAD_TOKEN):
-        if rev:
-            sentence = reversed(sentence)
-        result = [ch2int[ch] for ch in sentence]
-
-        if pad_len is not None:
-            result_len = len(result)
-            for i in range(pad_len - result_len):
-                result.append(pad_token)
-        return result
-
+    # previous sentences
     previous_sentences_ints = []
     for sentence in previous:
-        sentence_ints = sentence_to_ints(sentence, rev=False, pad_len=7 if align else None) # Should already be reversed
+        sentence_ints = process_sentence(sentence, rev=rev, pad_len=7 if align else None)
         previous_sentences_ints += [SEP_TOKEN] + sentence_ints
 
-    keywords_ints = sentence_to_ints(keyword, rev=rev, pad_len=4 if align else None)
+    # keywords
+    keywords_ints = process_sentence(keyword, rev=rev, pad_len=4 if align else None)
 
     source_ints = keywords_ints + previous_sentences_ints if prev else []
+    source_len = [len(source_ints)]
 
     source = fill_np_matrix(source_ints, 1, PAD_TOKEN)
-    source_len = np.array(len(source_ints))
+    source_len = np.array(source_len)
 
     return source, source_len
 
@@ -275,18 +277,6 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
     """
     if not os.path.exists(train_path):
         _gen_train_data()
-    _, ch2int = get_vocab()
-
-    def sentence_to_ints(sentence, rev=False, pad_len=None, pad_token=PAD_TOKEN):
-        if rev:
-            sentence = reversed(sentence)
-        result = [ch2int[ch] for ch in sentence]
-
-        if pad_len is not None:
-            result_len = len(result)
-            for i in range(pad_len - result_len):
-                result.append(pad_token)
-        return result
 
     with codecs.open(train_path, 'r', 'utf-8') as fin:
         stop = False
@@ -309,8 +299,8 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
 
                     current_sentence, keywords = line.strip().split('\t')
 
-                    current_sentence_ints = sentence_to_ints(current_sentence, rev=rev, pad_len=7 if align else None)
-                    keywords_ints = sentence_to_ints(keywords, rev=rev, pad_len=4 if align else None)
+                    current_sentence_ints = process_sentence(current_sentence, rev=rev, pad_len=7 if align else None)
+                    keywords_ints = process_sentence(keywords, rev=rev, pad_len=4 if align else None)
                     source_ints = keywords_ints + previous_sentences_ints if prev else []
 
                     target.append(current_sentence_ints)
@@ -329,8 +319,6 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
                 target_lens = np.array(target_lens)
 
                 yield source_padded, source_lens, target_padded, target_lens
-            else:
-                break
 
 
 def main():
