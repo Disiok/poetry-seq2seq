@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 #-*- coding: utf-8 -*-
 
-from utils import *
+import os
+import codecs
+import json
+
+from utils import DATA_PROCESSED_DIR, uprintln
 from segment import Segmenter
 from quatrains import get_quatrains
 

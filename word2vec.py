@@ -4,7 +4,6 @@
 import os
 from utils import DATA_PROCESSED_DIR
 import numpy as np
-from segment import Segmenter
 from vocab import get_vocab, VOCAB_SIZE
 from quatrains import get_quatrains
 from gensim import models

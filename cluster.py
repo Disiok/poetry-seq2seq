@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
+import codecs
 from rank_words import get_stopwords
 from data_utils import kw_train_path
 from sklearn.cluster import KMeans

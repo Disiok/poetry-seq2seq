@@ -1,7 +1,12 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from utils import *
+import codecs
+import sys
+import os
+import json
+
+from utils import DATA_PROCESSED_DIR, DATA_RAW_DIR, split_sentences
 from rhyme import RhymeDict
 
 
