@@ -10,7 +10,7 @@ import numpy as np
 from cnt_words import get_pop_quatrains
 from rank_words import get_word_ranks
 from segment import Segmenter
-from utils import embed_w2v, DATA_PROCESSED_DIR, apply_one_hot, apply_sparse, pad_to, SEP_TOKEN, PAD_TOKEN
+from utils import DATA_PROCESSED_DIR, embed_w2v, apply_one_hot, apply_sparse, pad_to, SEP_TOKEN, PAD_TOKEN
 from vocab import ch2int, VOCAB_SIZE, sentence_to_ints
 from word2vec import get_word_embedding
 
@@ -253,10 +253,10 @@ def prepare_batch_predict_data(keyword, previous=[], prev=True, rev=False, align
     keywords_ints = process_sentence(keyword, rev=rev, pad_len=4 if align else None)
 
     source_ints = keywords_ints + previous_sentences_ints if prev else []
-    source_len = [len(source_ints)]
+    source_len = len(source_ints)
 
-    source = fill_np_matrix(source_ints, 1, PAD_TOKEN)
-    source_len = np.array(source_len)
+    source = fill_np_matrix([source_ints], 1, PAD_TOKEN)
+    source_len = np.array([source_len])
 
     return source, source_len
 
