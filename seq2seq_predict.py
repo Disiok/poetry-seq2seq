@@ -6,7 +6,7 @@ import json
 
 import tensorflow as tf
 
-from data_utils import fill_np_array, fill_np_matrix
+from data_utils import prepare_batch_predict_data
 from seq2seq_model import Seq2SeqModel
 from vocab import get_vocab
 
@@ -95,21 +95,29 @@ class Seq2SeqPredictor:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.sess.close()
 
-    def predict(self, keywords, rev=True):
+    def predict(self, keywords, prev=True, rev=True, align=True):
         sentences = []
-        previous = []
         for keyword in keywords:
-            source = fill_np_matrix([[self.ch2int[ch] for ch in keyword] + previous], 1, 5999)
-            source_len = fill_np_array([len(source[0])], 1, 0)
+            source, source_len = prepare_batch_predict_data(keyword, previous=sentences, prev=prev, rev=rev, align=align)
 
-            predicted = self.model.predict(
+            predicted_batch = self.model.predict(
                 self.sess,
                 encoder_inputs=source,
                 encoder_inputs_length=source_len
             )
 
-            sentences.append(''.join(map(lambda x: self.int2ch[x[0]], predicted[0])[:-1]))
-            previous += [0] + map(lambda x: x[0], predicted[0])[:-1]
+            predicted_line = predicted_batch[0] # predicted is a batch of one line
+            predicted_line_clean = predicted_line[:-1] # remove the end token
+            predicted_line_flat = map(lambda x: x[0], predicted_line_clean) # Flatten from [time_step, 1] to [time_step]
+            predicted_line_ch = map(lambda x: self.int2ch[x], predicted_line_flat)
+            predicted_line_str = ''.join(predicted_line_ch)
+
+            if rev:
+                predicted = predicted_line_str[::-1]
+            else:
+                predicted = predicted_line_str
+
+            sentences.append(predicted)
         return sentences
 
 

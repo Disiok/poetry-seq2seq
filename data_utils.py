@@ -230,6 +230,35 @@ def batch_train_data(batch_size):
                 yield kw_mats, kw_lens, s_mats, s_lens
 
 
+def prepare_batch_predict_data(keyword, previous=[], prev=True, rev=False, align=False):
+    _, ch2int = get_vocab()
+
+    def sentence_to_ints(sentence, rev=False, pad_len=None, pad_token=PAD_TOKEN):
+        if rev:
+            sentence = reversed(sentence)
+        result = [ch2int[ch] for ch in sentence]
+
+        if pad_len is not None:
+            result_len = len(result)
+            for i in range(pad_len - result_len):
+                result.append(pad_token)
+        return result
+
+    previous_sentences_ints = []
+    for sentence in previous:
+        sentence_ints = sentence_to_ints(sentence, rev=False, pad_len=7 if align else None) # Should already be reversed
+        previous_sentences_ints += [SEP_TOKEN] + sentence_ints
+
+    keywords_ints = sentence_to_ints(keyword, rev=rev, pad_len=4 if align else None)
+
+    source_ints = keywords_ints + previous_sentences_ints if prev else []
+
+    source = fill_np_matrix(source_ints, 1, PAD_TOKEN)
+    source_len = np.array(len(source_ints))
+
+    return source, source_len
+
+
 def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
     """
     Get training data in batch major format, with keyword and previous sentences as source,
@@ -309,7 +338,7 @@ def main():
     print "Size of the training data: %d" %len(train_data)
     kw_train_data = get_kw_train_data()
     print "Size of the keyword training data: %d" %len(kw_train_data)
-    assert len(train_data) == 4*len(kw_train_data)
+    assert len(train_data) == 4 * len(kw_train_data)
 
 
 if __name__ == '__main__':
