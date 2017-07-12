@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from data_utils import prepare_batch_predict_data
 from seq2seq_model import Seq2SeqModel
-from vocab import get_vocab
+from vocab import get_vocab, ints_to_sentence
 
 # Decoding parameters
 tf.app.flags.DEFINE_integer('beam_width', 1, 'Beam width used in beamsearch')
@@ -68,9 +68,6 @@ class Seq2SeqPredictor:
         # Load model config
         config = load_config(FLAGS)
 
-        # Get vocab
-        self.int2ch, self.ch2int = get_vocab()
-
         config_proto = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement,
@@ -108,16 +105,13 @@ class Seq2SeqPredictor:
 
             predicted_line = predicted_batch[0] # predicted is a batch of one line
             predicted_line_clean = predicted_line[:-1] # remove the end token
-            predicted_line_flat = map(lambda x: x[0], predicted_line_clean) # Flatten from [time_step, 1] to [time_step]
-            predicted_line_ch = map(lambda x: self.int2ch[x], predicted_line_flat)
-            predicted_line_str = ''.join(predicted_line_ch)
+            predicted_ints = map(lambda x: x[0], predicted_line_clean) # Flatten from [time_step, 1] to [time_step]
+            predicted_sentence = ints_to_sentence(predicted_ints)
 
             if rev:
-                predicted = predicted_line_str[::-1]
-            else:
-                predicted = predicted_line_str
+                predicted_sentence = predicted_sentence[::-1]
 
-            sentences.append(predicted)
+            sentences.append(predicted_sentence)
         return sentences
 
 
