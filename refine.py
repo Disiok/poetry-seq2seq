@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import sys
 from word2vec import *
+from utils import DATA_PROCESSED_DIR
 from rhyme import RhymeDict
-_w2v_path = os.path.join(data_dir, 'word2vec.npy')
-_w2v_model_path = os.path.join(data_dir, 'word2vec.model')
-_w2v_with_alignment_path = os.path.join(data_dir, 'word2vec_with_alignment.npy')
-_w2v_with_alignment_model_path = os.path.join(data_dir, 'word2vec_with_alignment.model')
+
+_w2v_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.npy')
+_w2v_model_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.model')
+_w2v_with_alignment_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec_with_alignment.npy')
+_w2v_with_alignment_model_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec_with_alignment.model')
 
 def print_unicode_list(lst):
     msg = repr([x.encode(sys.stdout.encoding) for x in lst]).decode('string-escape')
