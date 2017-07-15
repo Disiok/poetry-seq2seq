@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import codecs
+import json
 from utils import *
 import struct
 import pypinyin
