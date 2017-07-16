@@ -40,7 +40,7 @@ def _min_word_cnt(cnts, poem, segmenter):
             min_cnt = min(min_cnt, cnts[seg])
     return min_cnt
 
-def get_pop_quatrains(num = 10000):
+def get_pop_quatrains(num = 100000):
     cnts = get_word_cnts()
     segmenter = Segmenter()
     quatrains = get_quatrains()
