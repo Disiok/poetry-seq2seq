@@ -104,7 +104,7 @@ def train():
         load_or_create_model(sess, model, saver, FLAGS)
 
         # Load word2vec embedding
-        embedding = get_word_embedding(FLAGS.hidden_units)
+        embedding = get_word_embedding(FLAGS.hidden_units, alignment=True)
         model.init_vars(sess, embedding=embedding)
 
         step_time, loss = 0.0, 0.0
