@@ -1,6 +1,7 @@
 *.pyc
 show.py
 data/processed/
+data/samples/
 save/
 model/
 log/

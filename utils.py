@@ -10,6 +10,7 @@ PAD_TOKEN = 5999
 
 DATA_RAW_DIR = 'data/raw'
 DATA_PROCESSED_DIR = 'data/processed'
+DATA_SAMPLES_DIR = 'data/samples'
 MODEL_DIR = 'model'
 LOG_DIR = 'log'
 
