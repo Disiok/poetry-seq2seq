@@ -7,7 +7,7 @@ import os
 import json
 
 from utils import DATA_PROCESSED_DIR, DATA_RAW_DIR, split_sentences
-from rhyme import RhymeDict
+from rhyme import RhymeUtil
 
 
 _corpus_list = ['qts_tab.txt', 'qss_tab.txt', 'qsc_tab.txt', 'qtais_tab.txt',
@@ -17,7 +17,7 @@ _corpus_list = ['qts_tab.txt', 'qss_tab.txt', 'qsc_tab.txt', 'qtais_tab.txt',
 def _parse_corpus(raw_file, json_file):
     print "Parsing %s ..." %raw_file ,
     sys.stdout.flush()
-    rdict = RhymeDict()
+    rdict = RhymeUtil()
     data = []
     with codecs.open(raw_file, 'r', 'utf-8') as fin:
         tags = fin.readline().strip().split(u'\t')

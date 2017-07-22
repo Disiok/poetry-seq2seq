@@ -3,7 +3,7 @@
 
 from utils import *
 from vocab import *
-from rhyme import RhymeDict
+from rhyme import RhymeUtil
 from word2vec import get_word_embedding
 from data_utils import *
 from collections import deque
@@ -128,7 +128,7 @@ class Generator:
             self.train(1)
         with tf.Session() as sess:
             self._init_vars(sess)
-            rdict = RhymeDict()
+            rdict = RhymeUtil()
             length = -1
             rhyme_ch = None
             for idx, keyword in enumerate(keywords):

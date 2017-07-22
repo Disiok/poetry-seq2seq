@@ -19,7 +19,9 @@ def eval_poems(evaluator, poems):
 
     mean_score = np.mean(scores)
     std_score = np.std(scores)
-    print "Mean score = {}, standard deviation = {}".format(mean_score, std_score)  
+
+    print "Mean score = {}, standard deviation = {}".format(mean_score, std_score)
+    return scores, mean_score, std_score
 
 
 def eval_train_data():

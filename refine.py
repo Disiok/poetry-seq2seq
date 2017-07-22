@@ -3,7 +3,7 @@
 import sys
 from word2vec import *
 from utils import DATA_PROCESSED_DIR
-from rhyme import RhymeDict
+from rhyme import RhymeUtil
 
 _w2v_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.npy')
 _w2v_model_path = os.path.join(DATA_PROCESSED_DIR, 'word2vec.model')
@@ -34,7 +34,7 @@ def refine(ch_rhyme, ch, alignment=False, topn=50):
         model = models.Word2Vec.load(_w2v_model_path)
     else:
         model = models.Word2Vec.load(_w2v_model_path)
-    rdict = RhymeDict()
+    rdict = RhymeUtil()
     int2ch, ch2int = get_vocab()
     rhyme = rdict.get_rhyme(unicode(ch_rhyme, "utf-8"))
     result = [t[0] for t in model.wv.most_similar(positive=[unicode(ch, "utf-8")], topn=topn)]

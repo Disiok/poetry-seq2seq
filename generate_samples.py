@@ -39,6 +39,22 @@ def generate_rnn_samples(sampled_poems):
             punctuation = u'\uff0c' if idx % 2 == 0 else u'\u3002'
             line = (sentence + punctuation + '\n').encode('utf-8')
             fout.write(line)
+
+
+def load_samples(file_path):
+    with open(file_path) as fin:
+        lines = fin.read().decode('utf-8').split()
+        lines_clean = map(lambda line: line[:-1], lines) # remove punctuations
+    poems = [lines_clean[i: i + 4] for i in range(0, len(lines_clean), 4)]
+    return poems
+
+
+def load_human_samples():
+    return load_samples(human_samples_path)
+
+
+def load_rnn_samples():
+    return load_samples(rnn_samples_path)
             
 
 def main():
