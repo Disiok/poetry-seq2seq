@@ -15,12 +15,10 @@ from seq2seq_model import Seq2SeqModel
 from word2vec import get_word_embedding
 
 # Data loading parameters
-tf.app.flags.DEFINE_string('source_vocabulary', 'data/europarl-v7.1.4M.de.json', 'Path to source vocabulary')
-tf.app.flags.DEFINE_string('target_vocabulary', 'data/europarl-v7.1.4M.fr.json', 'Path to target vocabulary')
-tf.app.flags.DEFINE_string('source_train_data', 'data/europarl-v7.1.4M.de', 'Path to source training data')
-tf.app.flags.DEFINE_string('target_train_data', 'data/europarl-v7.1.4M.fr', 'Path to target training data')
-tf.app.flags.DEFINE_string('source_valid_data', 'data/newstest2012.bpe.de', 'Path to source validation data')
-tf.app.flags.DEFINE_string('target_valid_data', 'data/newstest2012.bpe.fr', 'Path to target validation data')
+tf.app.flags.DEFINE_boolean('rev_data', True, 'Use reversed training data')
+tf.app.flags.DEFINE_boolean('align_data', True, 'Use aligned training data')
+tf.app.flags.DEFINE_boolean('prev_data', True, 'Use training data with previous sentences')
+tf.app.flags.DEFINE_boolean('align_word2vec', True, 'Use aligned word2vec model')
 
 # Network parameters
 tf.app.flags.DEFINE_string('cell_type', 'lstm', 'RNN cell for encoder and decoder, default: lstm')
@@ -104,7 +102,7 @@ def train():
         load_or_create_model(sess, model, saver, FLAGS)
 
         # Load word2vec embedding
-        embedding = get_word_embedding(FLAGS.hidden_units, alignment=True)
+        embedding = get_word_embedding(FLAGS.hidden_units, alignment=FLAGS.align_word2vec)
         model.init_vars(sess, embedding=embedding)
 
         step_time, loss = 0.0, 0.0
@@ -122,7 +120,10 @@ def train():
 
             # Prepare batch training data
             # TODO(sdsuo): Make corresponding changes in data_utils
-            for source, source_len, target, target_len in gen_batch_train_data(FLAGS.batch_size, prev=True, rev=True, align=True):
+            for source, source_len, target, target_len in gen_batch_train_data(FLAGS.batch_size,
+                                                                               prev=FLAGS.prev_data,
+                                                                               rev=FLAGS.rev_data,
+                                                                               align=FLAGS.align_data):
                 step_loss, summary = model.train(
                     sess,
                     encoder_inputs=source,

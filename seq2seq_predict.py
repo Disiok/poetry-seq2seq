@@ -10,6 +10,12 @@ from data_utils import prepare_batch_predict_data
 from seq2seq_model import Seq2SeqModel
 from vocab import get_vocab, ints_to_sentence
 
+# Data loading parameters
+tf.app.flags.DEFINE_boolean('rev_data', True, 'Use reversed training data')
+tf.app.flags.DEFINE_boolean('align_data', True, 'Use aligned training data')
+tf.app.flags.DEFINE_boolean('prev_data', True, 'Use training data with previous sentences')
+tf.app.flags.DEFINE_boolean('align_word2vec', True, 'Use aligned word2vec model')
+
 # Decoding parameters
 tf.app.flags.DEFINE_integer('beam_width', 1, 'Beam width used in beamsearch')
 tf.app.flags.DEFINE_integer('decode_batch_size', 80, 'Batch size used for decoding')
@@ -92,10 +98,14 @@ class Seq2SeqPredictor:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.sess.close()
 
-    def predict(self, keywords, prev=True, rev=True, align=True):
+    def predict(self, keywords):
         sentences = []
         for keyword in keywords:
-            source, source_len = prepare_batch_predict_data(keyword, previous=sentences, prev=prev, rev=rev, align=align)
+            source, source_len = prepare_batch_predict_data(keyword,
+                                                            previous=sentences,
+                                                            prev=FLAGS.prev_data,
+                                                            rev=FLAGS.rev_data,
+                                                            align=FLAGS.align_data)
 
             predicted_batch = self.model.predict(
                 self.sess,
@@ -108,7 +118,7 @@ class Seq2SeqPredictor:
             predicted_ints = map(lambda x: x[0], predicted_line_clean) # Flatten from [time_step, 1] to [time_step]
             predicted_sentence = ints_to_sentence(predicted_ints)
 
-            if rev:
+            if FLAGS.rev_data:
                 predicted_sentence = predicted_sentence[::-1]
 
             sentences.append(predicted_sentence)
