@@ -301,7 +301,7 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
 
                     current_sentence_ints = process_sentence(current_sentence, rev=rev, pad_len=7 if align else None)
                     keywords_ints = process_sentence(keywords, rev=rev, pad_len=4 if align else None)
-                    source_ints = keywords_ints + previous_sentences_ints if prev else []
+                    source_ints = keywords_ints + (previous_sentences_ints if prev else [])
 
                     target.append(current_sentence_ints)
                     target_lens.append(len(current_sentence_ints))
