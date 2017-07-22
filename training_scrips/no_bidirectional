@@ -1,0 +1,1 @@
+python seq2seq_train.py --model_dir model/no_bidirectional --nobidirectional
