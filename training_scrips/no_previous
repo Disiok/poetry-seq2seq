@@ -1,1 +1,1 @@
-python seq2seq_train.py --model_dir model/no_reverse_align --norev_data --noalign_data --noprev_data
+python seq2seq_train.py --model_dir model/no_prev --norev_data --noalign_data --noprev_data --nobidirectional
