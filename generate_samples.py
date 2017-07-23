@@ -7,8 +7,11 @@ from seq2seq_predict import Seq2SeqPredictor
 import random
 import os
 import string
+import os.path
+
+
 human_samples_path = os.path.join(DATA_SAMPLES_DIR, 'human.txt')
-rnn_samples_path = os.path.join(DATA_SAMPLES_DIR, 'rnn.txt')
+rnn_samples_path = os.path.join(DATA_SAMPLES_DIR, 'rnn_other.txt')
 
 
 def sample_poems(poems, num=4000):
@@ -17,9 +20,9 @@ def sample_poems(poems, num=4000):
 
 
 def generate_human_samples(sampled_poems):
-    with open(human_samples_path, 'a') as fout:
+    with open(human_samples_path, 'w+') as fout:
         for poem in sampled_poems:
-            for idx, sentence in enumerate(poem['sentences']):
+            for idx, sentence in enumerate(poem):
                 punctuation = u'\uff0c' if idx % 2 == 0 else u'\u3002'
                 line = (sentence + punctuation + '\n').encode('utf-8')
                 fout.write(line)
@@ -30,11 +33,11 @@ def generate_rnn_samples(sampled_poems):
     results = []
     with Seq2SeqPredictor() as predictor:
         for poem in sampled_poems:
-            input = string.join(poem['sentences']).strip()
+            input = string.join(poem).strip()
             keywords = planner.plan(input)
             lines = predictor.predict(keywords)
             results += lines
-    with open(rnn_samples_path, 'a') as fout:
+    with open(rnn_samples_path, 'w+') as fout:
         for idx, sentence in enumerate(results):
             punctuation = u'\uff0c' if idx % 2 == 0 else u'\u3002'
             line = (sentence + punctuation + '\n').encode('utf-8')
@@ -58,10 +61,20 @@ def load_rnn_samples():
             
 
 def main():
-    poems = get_pop_quatrains()
-    sampled_poems = sample_poems(poems)
-    generate_human_samples(sampled_poems)
-    generate_rnn_samples(sampled_poems)
+    if os.path.exists(human_samples_path):
+        print 'Poems already sampled, use the same human samples.'
+        cleaned_poems = load_human_samples()
+    else:
+        print 'Poems not yet sampled, use new human samples.'
+        poems = get_pop_quatrains()
+        sampled_poems = sample_poems(poems)
+        cleaned_poems = map(lambda poem: poem['sentences'], sampled_poems)
+
+        print 'Generating human samples.'
+        generate_human_samples(cleaned_poems)
+
+    print 'Generating model samples'
+    generate_rnn_samples(cleaned_poems)
 
 if __name__ == '__main__':
     main()
