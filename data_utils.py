@@ -252,7 +252,7 @@ def prepare_batch_predict_data(keyword, previous=[], prev=True, rev=False, align
     # keywords
     keywords_ints = process_sentence(keyword, rev=rev, pad_len=4 if align else None)
 
-    source_ints = keywords_ints + previous_sentences_ints if prev else []
+    source_ints = keywords_ints + (previous_sentences_ints if prev else [])
     source_len = len(source_ints)
 
     source = fill_np_matrix([source_ints], 1, PAD_TOKEN)
