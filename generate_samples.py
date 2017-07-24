@@ -11,7 +11,7 @@ import os.path
 
 
 human_samples_path = os.path.join(DATA_SAMPLES_DIR, 'human.txt')
-rnn_samples_path = os.path.join(DATA_SAMPLES_DIR, 'rnn_other.txt')
+rnn_samples_path = os.path.join(DATA_SAMPLES_DIR, 'default.txt')
 
 
 def sample_poems(poems, num=4000):
@@ -30,18 +30,19 @@ def generate_human_samples(sampled_poems):
 
 def generate_rnn_samples(sampled_poems):
     planner = Planner()
-    results = []
     with Seq2SeqPredictor() as predictor:
-        for poem in sampled_poems:
-            input = string.join(poem).strip()
-            keywords = planner.plan(input)
-            lines = predictor.predict(keywords)
-            results += lines
-    with open(rnn_samples_path, 'w+') as fout:
-        for idx, sentence in enumerate(results):
-            punctuation = u'\uff0c' if idx % 2 == 0 else u'\u3002'
-            line = (sentence + punctuation + '\n').encode('utf-8')
-            fout.write(line)
+        with open(rnn_samples_path, 'w+') as fout:
+            for poem_idx, poem in enumerate(sampled_poems):
+                input = string.join(poem).strip()
+                keywords = planner.plan(input)
+
+                print 'Predicting poem {}.'.format(poem_idx)
+                lines = predictor.predict(keywords)
+
+                for idx, sentence in enumerate(lines):
+                    punctuation = u'\uff0c' if idx % 2 == 0 else u'\u3002'
+                    line = (sentence + punctuation + '\n').encode('utf-8')
+                    fout.write(line)
 
 
 def load_samples(file_path):
