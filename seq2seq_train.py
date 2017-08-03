@@ -15,6 +15,7 @@ from seq2seq_model import Seq2SeqModel
 from word2vec import get_word_embedding
 
 # Data loading parameters
+tf.app.flags.DEFINE_boolean('cangtou_data', True, 'Use cangtou training data')
 tf.app.flags.DEFINE_boolean('rev_data', True, 'Use reversed training data')
 tf.app.flags.DEFINE_boolean('align_data', True, 'Use aligned training data')
 tf.app.flags.DEFINE_boolean('prev_data', True, 'Use training data with previous sentences')
@@ -123,7 +124,8 @@ def train():
             for source, source_len, target, target_len in gen_batch_train_data(FLAGS.batch_size,
                                                                                prev=FLAGS.prev_data,
                                                                                rev=FLAGS.rev_data,
-                                                                               align=FLAGS.align_data):
+                                                                               align=FLAGS.align_data,
+                                                                               cangtou=FLAGS.cangtou_data):
                 step_loss, summary = model.train(
                     sess,
                     encoder_inputs=source,
