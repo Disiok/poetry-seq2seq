@@ -15,6 +15,7 @@ from vocab import ch2int, VOCAB_SIZE, sentence_to_ints
 from word2vec import get_word_embedding
 
 train_path = os.path.join(DATA_PROCESSED_DIR, 'train.txt')
+cangtou_train_path = os.path.join(DATA_PROCESSED_DIR, 'cangtou_train.txt')
 kw_train_path = os.path.join(DATA_PROCESSED_DIR, 'kw_train.txt')
 
 
@@ -44,7 +45,6 @@ def _gen_train_data():
         sentences = poem['sentences']
         if len(sentences) == 4:
             flag = True
-            lines = u''
             rows = []
             kw_row = []
             for sentence in sentences:
@@ -70,106 +70,35 @@ def _gen_train_data():
     print "Training data is generated."
 
 
-def get_train_data():
-    if not os.path.exists(train_path):
-        _gen_train_data()
+# TODO(vera): find a better name than cangtou...
+def _gen_cangtou_train_data():
+    poems = get_pop_quatrains()
+    random.shuffle(poems)
+    with codecs.open(cangtou_train_path, 'w', 'utf-8') as fout:
+        for idx, poem in enumerate(poems):
+            for sentence in poem['sentences']:
+                fout.write(sentence, "\t", sentence[0])
+            if 0 == (idx + 1) % 2000:
+                print "[Training Data] %d/%d poems are processed." %(idx+1, len(poems))
+    print "Cangtou training data is generated."
+
+
+def get_train_data(cangtou=False):
+    train_data_path = cangtou_train_path if cangtou else train_path
+    if not os.path.exists(train_data_path):
+        if cangtou:
+            _gen_cangtou_train_data()
+        else:
+            _gen_train_data()
+
     data = []
-    with codecs.open(train_path, 'r', 'utf-8') as fin:
+    with codecs.open(train_data_path, 'r', 'utf-8') as fin:
         line = fin.readline()
         while line:
             toks = line.strip().split('\t')
             data.append({'sentence':toks[0], 'keyword':toks[1]})
             line = fin.readline()
     return data
-
-def get_keras_train_data():
-    train_data = get_train_data()
-    
-    X_train = []
-    Y_train = []
-    for idx in xrange(len(train_data)):
-        line_number = idx % 4
-        
-        keyword = train_data[idx]['keyword']
-        current_sentence = train_data[idx]['sentence']
-        previous_sentences = ''.join([train_data[idx - i]['sentence'] for i in range(line_number, 0, -1)])
-        
-        X_entry = pad_to([ch2int[ch] for ch in (keyword + previous_sentences)], 26, 5999)
-        Y_entry = pad_to([ch2int[ch] for ch in current_sentence], 8, 5999)
-        
-        X_train.append(X_entry)
-        Y_train.append(Y_entry)
-        
-    return X_train, Y_train
-
-def gen_keras_one_hot_train_data(batch_size=64):
-    print 'Preparing data'
-    embedding = get_word_embedding(128)
-    X_train, Y_train = get_keras_train_data()
-
-    X_train_embedded = embed_w2v(embedding, X_train)
-    Y_train_one_hot = apply_one_hot(Y_train)
-
-    n_samples = len(X_train)
-
-
-    print 'Data preparation completed'
-    i = 0 
-    while True:
-
-        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_one_hot[i: i + batch_size])
-
-        if i + batch_size > n_samples:
-            i = 0
-        else:
-            i += batch_size
-
-
-def gen_keras_sparse_train_data(batch_size=64):
-    print 'Preparing data'
-    embedding = get_word_embedding(128)
-    X_train, Y_train = get_keras_train_data()
-
-    X_train_embedded = embed_w2v(embedding, X_train)
-    Y_train_one_hot = apply_sparse(Y_train)
-
-    n_samples = len(X_train)
-
-
-    print 'Data preparation completed'
-    i = 0 
-    while True:
-
-        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_one_hot[i: i + batch_size])
-
-        if i + batch_size > n_samples:
-            i = 0
-        else:
-            i += batch_size
-
-
-def gen_keras_train_data(batch_size=64):
-    print 'Preparing data'
-    embedding = get_word_embedding(128)
-    X_train, Y_train = get_keras_train_data()
-
-    X_train_embedded = embed_w2v(embedding, X_train)
-    Y_train_embedded = embed_w2v(embedding, Y_train)
-
-    n_samples = len(X_train)
-
-
-    print 'Data preparation completed'
-    i = 0 
-    while True:
-
-        yield np.array(X_train_embedded[i: i + batch_size]), np.array(Y_train_embedded[i: i + batch_size])
-
-        if i + batch_size > n_samples:
-            i = 0
-        else:
-            i += batch_size
-
 
 def get_kw_train_data():
     if not os.path.exists(kw_train_path):
@@ -261,7 +190,7 @@ def prepare_batch_predict_data(keyword, previous=[], prev=True, rev=False, align
     return source, source_len
 
 
-def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
+def gen_batch_train_data(batch_size, prev=True, rev=False, align=False, cangtou=False):
     """
     Get training data in batch major format, with keyword and previous sentences as source,
     aligned and reversed
@@ -275,10 +204,14 @@ def gen_batch_train_data(batch_size, prev=True, rev=False, align=False):
         target: [batch_size, time_steps]: current sentence
         target_lens: [batch_size]: length of target
     """
-    if not os.path.exists(train_path):
-        _gen_train_data()
+    train_data_path = cangtou_train_path if cangtou else train_path
+    if not os.path.exists(train_data_path):
+        if cangtou:
+            _gen_cangtou_train_data()
+        else:
+            _gen_train_data()
 
-    with codecs.open(train_path, 'r', 'utf-8') as fin:
+    with codecs.open(train_data_path, 'r', 'utf-8') as fin:
         stop = False
         while not stop:
             source = []
