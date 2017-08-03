@@ -77,7 +77,7 @@ def _gen_cangtou_train_data():
     with codecs.open(cangtou_train_path, 'w', 'utf-8') as fout:
         for idx, poem in enumerate(poems):
             for sentence in poem['sentences']:
-                fout.write(sentence, "\t", sentence[0])
+                fout.write(sentence + "\t" + sentence[0] + "\n")
             if 0 == (idx + 1) % 2000:
                 print "[Training Data] %d/%d poems are processed." %(idx+1, len(poems))
     print "Cangtou training data is generated."
