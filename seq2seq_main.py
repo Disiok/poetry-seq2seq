@@ -9,8 +9,11 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+def get_cangtou_keywords(input):
+    assert(len(input) == 4)
+    return [c for c in input]
 
-def main():
+def main(cangtou=False):
     planner = Planner()
     with Seq2SeqPredictor() as predictor:
         # Run loop
@@ -24,8 +27,11 @@ def main():
                 elif input.lower() in ['quit', 'exit']:
                     terminate = True
                 else:
-                    # Generate keywords
-                    keywords = planner.plan(input)
+                    if cangtou:
+                        keywords = get_cangtou_keywords(input)
+                    else:
+                        # Generate keywords
+                        keywords = planner.plan(input)
 
                     # Generate poem
                     lines = predictor.predict(keywords)
@@ -48,4 +54,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(cangtou=True)
