@@ -2,11 +2,11 @@
 
 
 ## Dependencies
-[Python 2.7](https://www.python.org/download/releases/2.7/)
-[TensorFlow 1.2.1](https://www.tensorflow.org/)
-[Jieba 0.38](https://github.com/fxsjy/jieba)
-[Gensim 2.0.0](https://radimrehurek.com/gensim/)
-[pypinyin 0.23](https://pypi.python.org/pypi/pypinyin)
+[Python 2.7](https://www.python.org/download/releases/2.7/)  
+[TensorFlow 1.2.1](https://www.tensorflow.org/)  
+[Jieba 0.38](https://github.com/fxsjy/jieba)  
+[Gensim 2.0.0](https://radimrehurek.com/gensim/)  
+[pypinyin 0.23](https://pypi.python.org/pypi/pypinyin)  
 
 ## Features
 **Network:**
@@ -15,6 +15,7 @@
 
 **Training and Predicting:**
 - [x] Alignment boosted word2vec
+- [x] Data mode: only keywords (no preceding sentences)
 - [x] Data mode: reversed
 - [x] Data mode: aligned
 - [x] Training mode: ground truth
@@ -39,21 +40,24 @@
 
 
 ## Data Processing
-
-To begin with, you should process the raw data to generate the training data:
+To prepare training data:
 ```sh
 python data_utils.py
 ```
 
-The TextRank algorithm may take many hours to run.
-Instead, you could choose to stop it early by typing ctrl+c to interrupt the iterations,
-when the progress shown in the terminal has remained stationary for a long time.
-
-Then, generate the word embedding data using gensim Word2Vec model:
+> **Note**
+> The TextRank algorithm may take many hours to run.
+> Instead, you can choose to interrupt the iterations and stop it early,
+> when the progress shown in the terminal has remained stationary for a long time.
+  
+Then, to generate the word embedding:
 ```sh
 python word2vec.py
 ```
 
+> **Alternative**
+> As an alternative, we have also provided pre-processed data in the `data/starterkit` directory
+> You may simply perform `cp data/starterkit/* data/processed` to skip the data processing step
 
 ## Training
 
@@ -62,11 +66,18 @@ To train the default model:
 python train.py
 ```
 
+To view the full list of configurable training parameters:
+```sh
+python train.py -h
+```
+
+
 ## Generating
 
-Start the user interaction program in a terminal once the training has finished:
+To start the user interation program:
+```sh
+python main.py
+```
 
-    python main.py
-
-Type in an input sentence each time and the poem generator will create a poem for you.
+## Evaluating
 
