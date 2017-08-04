@@ -5,7 +5,7 @@ import numpy as np
 
 from quatrains import get_quatrains
 from rhyme import RhymeEvaluator
-from seq2seq_predict import Seq2SeqPredictor
+from predict import Seq2SeqPredictor
 from plan import Planner
 
 from IPython import embed

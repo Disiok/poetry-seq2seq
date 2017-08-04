@@ -7,7 +7,7 @@ import json
 import tensorflow as tf
 
 from data_utils import prepare_batch_predict_data
-from seq2seq_model import Seq2SeqModel
+from model import Seq2SeqModel
 from vocab import get_vocab, ints_to_sentence
 
 # Data loading parameters

@@ -11,7 +11,7 @@ import tensorflow as tf
 
 from utils import SEP_TOKEN, PAD_TOKEN, VOCAB_SIZE, MODEL_DIR
 from data_utils import gen_batch_train_data
-from seq2seq_model import Seq2SeqModel
+from model import Seq2SeqModel
 from word2vec import get_word_embedding
 
 # Data loading parameters

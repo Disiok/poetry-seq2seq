@@ -3,7 +3,7 @@
 from utils import DATA_SAMPLES_DIR
 from cnt_words import get_pop_quatrains
 from plan import Planner
-from seq2seq_predict import Seq2SeqPredictor
+from predict import Seq2SeqPredictor
 import random
 import os
 import string
