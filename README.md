@@ -101,9 +101,12 @@ python main.py -h
 
 > **Note**  
 > The program currently does not check that predication parameters matches corresponding training parameters.  
-> User has to ensure, in particular, the data loading mode correspond the one used during traing.  
+> User has to ensure, in particular, the data loading modes correspond with the ones used during traing.  
 > (e.g. If training data is `reversed` and `aligned`, then prediction input should also be `reversed` and `aligned`.  
 > Otherwise, results may range from subtle differences in output to total crash.  
 
 ## Evaluating
 
+## Acknowledgement
+1. The data processing source code is based on [DevinZ1993](https://github.com/DevinZ1993/Chinese-Poetry-Generation)'s implementation.
+2. The neural network implementation is inspired by [JayParks](https://github.com/JayParks/tf-seq2seq)'s work.
