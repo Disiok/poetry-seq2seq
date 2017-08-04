@@ -1,59 +1,68 @@
-# RNN-Based Poem Generator
+# Chinese Poetry Generation
 
-A classical Chinese quatrain generator based on the RNN encoder-decoder framework.
-
-Two 4-layer LSTM networks are used as encoder and decoder respectively.
-The encoder takes as input four keywords provided by a poem planner,
-and the decoder generates a quatrain character by character.
-
-The original repository is [here](https://github.com/DevinZ1993/Chinese-Poetry-Generation), 
-where there are also a bunch of raw data files necessary to train the model.
-The raw data files were downloaded from the Internet, mostly from similar open source projects.
-
-    raw/
-    ├── ming.all
-    ├── pinyin.txt
-    ├── qing.all
-    ├── qsc_tab.txt
-    ├── qss_tab.txt
-    ├── qtais_tab.txt
-    ├── qts_tab.txt
-    ├── shixuehanying.txt
-    ├── stopwords.txt
-    └── yuan.all
 
 ## Dependencies
-
-Python 2.7
-
+[Python 2.7](https://www.python.org/download/releases/2.7/)
 [TensorFlow 1.2.1](https://www.tensorflow.org/)
-
 [Jieba 0.38](https://github.com/fxsjy/jieba)
-
 [Gensim 2.0.0](https://radimrehurek.com/gensim/)
-
 [pypinyin 0.23](https://pypi.python.org/pypi/pypinyin)
 
-## Training
+## Features
+**Network:**
+- [x] Bidirectional encoder
+- [x] Attention decoder
+
+**Training and Predicting:**
+- [x] Alignment boosted word2vec
+- [x] Data mode: reversed
+- [x] Data mode: aligned
+- [x] Training mode: ground truth
+- [x] Training mode: scheduled sampling
+- [x] Predicting mode: greedy
+- [x] Predicting mode: sampling
+- [ ] Predicting mode: beam search
+
+**Refinement:**
+- [x] Output refiner
+- [ ] Reinforcement learning tuner
+- [ ] Iterative polishing
+
+**Evaluation:**
+- [x] Evaluation: rhyming
+- [x] Evaluation: tonal structure
+- [ ] Evaluation: alignment score
+- [ ] Evaluation: BLEU score
+
+
+## Project Structure
+
+
+## Data Processing
 
 To begin with, you should process the raw data to generate the training data:
-
-    python data_utils.py
+```sh
+python data_utils.py
+```
 
 The TextRank algorithm may take many hours to run.
 Instead, you could choose to stop it early by typing ctrl+c to interrupt the iterations,
 when the progress shown in the terminal has remained stationary for a long time.
 
 Then, generate the word embedding data using gensim Word2Vec model:
-
-    python word2vec.py
-
-Now, type the following command and wait for several hours:
-
-    python train.py
+```sh
+python word2vec.py
+```
 
 
-## Run Tests
+## Training
+
+To train the default model:
+```sh
+python train.py
+```
+
+## Generating
 
 Start the user interaction program in a terminal once the training has finished:
 
