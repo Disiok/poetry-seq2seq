@@ -11,6 +11,7 @@ from utils import DATA_RAW_DIR, DATA_PROCESSED_DIR
 sxhy_raw = os.path.join(DATA_RAW_DIR, 'shixuehanying.txt')
 sxhy_path = os.path.join(DATA_PROCESSED_DIR, 'sxhy_dict.txt')
 
+
 def _gen_sxhy_dict():
     sxhy_dict = dict()
     with codecs.open(sxhy_raw, 'r', 'utf-8') as fin:
@@ -35,10 +36,6 @@ def _gen_sxhy_dict():
         for word in sxhy_dict:
             fout.write(word+'\n')
 
-if not os.path.exists(sxhy_path):
-    _gen_sxhy_dict()
-jieba.load_userdict(sxhy_path)
-
 
 def get_sxhy_dict():
     sxhy_dict = set()
@@ -53,6 +50,12 @@ def get_sxhy_dict():
 class Segmenter:
 
     def __init__(self):
+        if not os.path.exists(sxhy_path):
+            _gen_sxhy_dict()
+
+        print 'Loading sxhy dictionary into jieba.'
+        jieba.load_userdict(sxhy_path)
+
         self._sxhy_dict = get_sxhy_dict()
 
     def segment(self, sentence):
