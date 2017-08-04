@@ -40,11 +40,11 @@
 
 ## Project Structure
 **Data**  
-`data`: directory for `raw` data, `processed` data, pre-processed `starterkit` data, and generated poetry `samples`
-`model`: directory for saved neural network models
-`log`: directory for training logs
-`notebooks`: directory for exploratory/experimental IPython notebooks
-`training_scripts`: directory for sample scripts used for training several basic models
+`data`: directory for `raw` data, `processed` data, pre-processed `starterkit` data, and generated poetry `samples`  
+`model`: directory for saved neural network models  
+`log`: directory for training logs  
+`notebooks`: directory for exploratory/experimental IPython notebooks  
+`training_scripts`: directory for sample scripts used for training several basic models  
 
 **Code**  
 
