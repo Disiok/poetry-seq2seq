@@ -1,5 +1,5 @@
 # Chinese Poetry Generation
-
+This project aims to implement and improve upon the classical Chinese poetry generation system proposed in ["Chinese Poetry Generation with Planning based Neural Network"](https://arxiv.org/abs/1610.09889). 
 
 
 ![Sample generated Chinese poetry](data/resource/generated_poem.png)
@@ -106,6 +106,13 @@ python main.py -h
 > Otherwise, results may range from subtle differences in output to total crash.  
 
 ## Evaluating
+
+
+## Further Reading
+1. ["Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks"](https://arxiv.org/abs/1506.03099)
+2. ["Sequence-to-Sequence Learning as Beam-Search Optimization"](https://arxiv.org/abs/1606.02960)
+3. ["Tuning Recurrent Neural Networks with Reinforcement Learning"](https://arxiv.org/pdf/1611.02796v2.pdf)
+4. ["Deep Reinforcement Learning for Dialogue Generation"](https://arxiv.org/pdf/1606.01541.pdf)
 
 ## Acknowledgement
 1. The data processing source code is based on [DevinZ1993](https://github.com/DevinZ1993/Chinese-Poetry-Generation)'s implementation.
