@@ -48,11 +48,11 @@ This project aims to implement and improve upon the classical Chinese poetry gen
 `training_scripts`: directory for sample scripts used for training several basic models  
 
 **Code**  
-`model.py`: graph definition
-`train.py`: training logic
-`predict.py`: prediction logic
-`plan.py`: keyword planning logic
-`main.py`: user interaction program
+`model.py`: graph definition  
+`train.py`: training logic  
+`predict.py`: prediction logic  
+`plan.py`: keyword planning logic  
+`main.py`: user interaction program  
 
 ## Data Processing
 To prepare training data:
