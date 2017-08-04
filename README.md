@@ -45,7 +45,7 @@ To prepare training data:
 python data_utils.py
 ```
 
-> **Note**
+> **Note**  
 > The TextRank algorithm may take many hours to run.
 > Instead, you can choose to interrupt the iterations and stop it early,
 > when the progress shown in the terminal has remained stationary for a long time.
@@ -55,7 +55,7 @@ Then, to generate the word embedding:
 python word2vec.py
 ```
 
-> **Alternative**
+> **Alternative**  
 > As an alternative, we have also provided pre-processed data in the `data/starterkit` directory
 > You may simply perform `cp data/starterkit/* data/processed` to skip the data processing step
 
