@@ -1,0 +1,80 @@
+.wordwrap {
+   white-space: pre-wrap;      /* CSS3 */
+   white-space: -moz-pre-wrap; /* Firefox */
+   white-space: -pre-wrap;     /* Opera <7 */
+   white-space: -o-pre-wrap;   /* Opera 7 */
+   word-wrap: break-word;      /* IE */
+}
+
+body {
+  background-color: #F2F1EF;
+  background: repeating-linear-gradient(
+    45deg,
+    #EEEEEE,
+    #EEEEEE 5px,
+    #F2F1EF 5px,
+    #F2F1EF 10px
+  );
+}
+
+h1 {
+  color: #1BBC9B;
+  font-family: 'Source Code Pro';
+  font-size: 6em;
+  margin-bottom: 15px;
+}
+
+.smaller {
+  font-size: 4em;
+}
+
+.thisisforyouryan {
+  font-size:3em;
+}
+
+h2 {
+  color: #1BBC9B;
+  font-size: 1.3em;
+}
+
+#choice1, #choice2 {
+  padding: 40px;
+  line-height: 175%;
+}
+
+.button, button, input[type=button], input[type=reset], input[type=submit] {
+  color: white;
+  background-color: #1BBC9B;
+  border-color: #1BBC9B;
+  font-size: large;
+}
+
+.button:focus, .button:hover, button:focus, button:hover, input[type=button]:focus, input[type=button]:hover, input[type=reset]:focus, input[type=reset]:hover, input[type=submit]:focus, input[type=submit]:hover {
+  color: white;
+  background-color: #1BBC9B;
+  border-color: #1BBC9B;
+}
+.poem {
+    margin: 15px;
+}
+
+.container {position: relative;}
+
+@media screen and (max-width:450px) {
+  #choice1, #choice2 {
+    padding: 15px;
+    margin-left: 0px;
+    margin-right: 0px;
+  }
+  h1 {
+    font-size: 4em;
+    margin: auto;
+  }
+  .smaller {
+    font-size:2em;
+  }
+
+  .thisisforyouryan {
+    font-size:2em;
+  }
+}
