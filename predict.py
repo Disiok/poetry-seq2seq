@@ -22,6 +22,7 @@ tf.app.flags.DEFINE_integer('decode_batch_size', 80, 'Batch size used for decodi
 tf.app.flags.DEFINE_integer('max_decode_step', 500, 'Maximum time step limit to decode')
 tf.app.flags.DEFINE_boolean('write_n_best', False, 'Write n-best list (n=beam_width)')
 tf.app.flags.DEFINE_string('model_path', None, 'Path to a specific model checkpoint.')
+tf.app.flags.DEFINE_string('model_dir', None, 'Path to load model checkpoints')
 tf.app.flags.DEFINE_string('predict_mode', 'greedy', 'Decode helper to use for predicting')
 tf.app.flags.DEFINE_string('decode_input', 'data/newstest2012.bpe.de', 'Decoding input path')
 tf.app.flags.DEFINE_string('decode_output', 'data/newstest2012.bpe.de.trans', 'Decoding output path')
@@ -40,12 +41,16 @@ def unicode_to_utf8(d):
 
 
 def load_config(FLAGS):
-    if FLAGS.model_path is None:
-        checkpoint_path = tf.train.latest_checkpoint('model/')
-        print 'Model path not specified, using the latest checkpoint at: {}'.format(checkpoint_path)
-    else:
+    if FLAGS.model_path is not None:
         checkpoint_path = FLAGS.model_path
         print 'Model path specified at: {}'.format(checkpoint_path)
+    elif FLAGS.model_dir is not None:
+        checkpoint_path = tf.train.latest_checkpoint(FLAGS.model_dir + '/')
+        print 'Model dir specified, using the latest checkpoint at: {}'.format(checkpoint_path)
+    else:
+        checkpoint_path = tf.train.latest_checkpoint('model/')
+        print 'Model path not specified, using the latest checkpoint at: {}'.format(checkpoint_path)
+
     FLAGS.model_path = checkpoint_path
 
     # Load config saved with model
