@@ -8,3 +8,4 @@ log/
 .backup/
 .idea/
 .ipynb_checkpoints/
+model*/
