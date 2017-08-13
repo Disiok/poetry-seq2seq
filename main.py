@@ -5,6 +5,8 @@ from plan import Planner
 from predict import Seq2SeqPredictor
 import sys
 
+import tensorflow as tf
+tf.app.flags.DEFINE_boolean('cangtou', False, 'Generate Acrostic Poem')
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -54,9 +56,4 @@ def main(cangtou=False):
 
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='Generate poetry in Cangtou mode or Planning mode (Default)')
-    parser.add_argument('--cangtou', help='Generate Acrostic Poem', action='store_true', required=False)
-    args = parser.parse_args()
-
-    main(cangtou=args.cangtou)
+    main(cangtou=tf.app.flags.FLAGS.cangtou)

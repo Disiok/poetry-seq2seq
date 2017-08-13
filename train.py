@@ -15,7 +15,7 @@ from model import Seq2SeqModel
 from word2vec import get_word_embedding
 
 # Data loading parameters
-tf.app.flags.DEFINE_boolean('cangtou_data', True, 'Use cangtou training data')
+tf.app.flags.DEFINE_boolean('cangtou_data', False, 'Use cangtou training data')
 tf.app.flags.DEFINE_boolean('rev_data', True, 'Use reversed training data')
 tf.app.flags.DEFINE_boolean('align_data', True, 'Use aligned training data')
 tf.app.flags.DEFINE_boolean('prev_data', True, 'Use training data with previous sentences')
