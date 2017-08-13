@@ -4,6 +4,7 @@
 import codecs
 import os
 import json
+import sys
 
 from utils import DATA_RAW_DIR, DATA_PROCESSED_DIR
 from segment import Segmenter, get_sxhy_dict
