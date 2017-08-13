@@ -54,4 +54,9 @@ def main(cangtou=False):
 
 
 if __name__ == '__main__':
-    main(cangtou=True)
+    import argparse
+    parser = argparse.ArgumentParser(description='Generate poetry in Cangtou mode or Planning mode (Default)')
+    parser.add_argument('--cangtou', help='Generate Acrostic Poem', action='store_true', required=False)
+    args = parser.parse_args()
+
+    main(cangtou=args.cangtou)
