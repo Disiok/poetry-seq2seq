@@ -7,6 +7,7 @@ from quatrains import get_quatrains
 from rhyme import RhymeEvaluator
 from predict import Seq2SeqPredictor
 from plan import Planner
+from generate_samples import *
 
 from IPython import embed
 
@@ -52,8 +53,21 @@ def eval_generated_data(num=100):
     eval_poems(evaluator, poems)
 
 
+def eval_train_sample():
+    poems = load_human_samples()
+    evaluator = RhymeEvaluator()
+    eval_poems(evaluator, poems)
+
+
+def eval_generated_sample():
+    poems = load_rnn_samples()
+    evaluator = RhymeEvaluator()
+    eval_poems(evaluator, poems)
+
+
 def main():
-    eval_train_data()
+    eval_train_sample()
+    eval_generated_sample()
     # eval_generated_data()
     
 

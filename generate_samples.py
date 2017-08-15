@@ -11,10 +11,10 @@ import os.path
 
 
 human_samples_path = os.path.join(DATA_SAMPLES_DIR, 'human.txt')
-rnn_samples_path = os.path.join(DATA_SAMPLES_DIR, 'default.txt')
+rnn_samples_path = os.path.join(DATA_SAMPLES_DIR, 'rnn.txt')
 
 
-def sample_poems(poems, num=4000):
+def sample_poems(poems, num=500):
     sampled_poems = random.sample(poems, num)
     return sampled_poems
 
