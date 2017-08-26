@@ -2,6 +2,12 @@ var express = require('express');
 var app = express();
 var Q = require("q");
 
+//database
+var mongoose = require('mongoose');
+var dbName = 'poetrygen';
+var connectionString = 'mongodb://localhost/' + dbName;
+mongoose.connect(connectionString);
+
 app.use("/", express.static('public'));
 
 const pythonShell = require('python-shell');
@@ -12,8 +18,6 @@ const mustache = require('mustache-express');
 app.engine('mustache', mustache());
 app.set('view engine', 'mustache');
 
-
-var testing = true;
 
 var last_trial_id = 0;
 var trials = {};
@@ -46,6 +50,16 @@ function getPoem(type) {
     });
   }
   return toR.promise;
+
+  //
+  // Model.count().exec(function(err, count){
+  //   var random = Math.floor(Math.random() * count);
+  //   Model.findOne().skip(random).exec(
+  //     function (err, result) {
+  //       // result is random
+  //     });
+  //
+  // });
 }
 
 function generateTrial() {
