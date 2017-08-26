@@ -8,6 +8,17 @@ var dbName = 'poetrygen';
 var connectionString = 'mongodb://localhost/' + dbName;
 mongoose.connect(connectionString);
 
+var P = require('./models/poem')
+
+var Poem = mongoose.model('Poem', mongoose.model('Poem').schema);
+
+Poem.find({}).exec(function(error, collection) {
+  if (collection.length === 0 ) {
+    Poem.create({content: "test", author: "Human"}, console.log);
+  }
+});
+
+
 app.use("/", express.static('public'));
 
 const pythonShell = require('python-shell');
@@ -23,43 +34,49 @@ var last_trial_id = 0;
 var trials = {};
 
 function getPoem(type) {
-  var toR = Q.defer();
-  var options = { pythonPath: 'python3'};
-
-  if (type =="rnn") {
-    pythonShell.run('pick_selection_rnn.py', options, function (err, poem) {
-      if (poem == null) {
-        if (err) console.log(err);
-        poem = "of his elect content,<br>conform my soul as t were a church<br><br>unto her sacrament<br><br>love<br><br>love is anterior to life,<br><br>posterior to death,<br><br>initial of creation, and<br><br>the exponent of breath<br><br>satisfied<br><br>one blessing had i, than the rest<br><br>so larger to my eyes<br><br>that i stopped gauging, satisfied,<br><br>for this enchanted size<br><br>it was the limit of my dream,<br><br>the focus of my prayer, --<br><br>a perfect, paralyzing bliss<br><br>contented as despair<br><br>i knew no more of want or cold,<br>";
-        toR.resolve(poem);
-        return;
-      }
-      poem = poem.join("<br />");
-      toR.resolve(poem);
-    });
-  } else if (type == "human") {
-    pythonShell.run('pick_selection_human.py', options, function (err, poem) {
-      if (poem == null) {
-        if (err) console.log(err);
-        poem = "of his elect content,<br>conform my soul as t were a church<br><br>unto her sacrament<br><br>love<br><br>love is anterior to life,<br><br>posterior to death,<br><br>initial of creation, and<br><br>the exponent of breath<br><br>satisfied<br><br>one blessing had i, than the rest<br><br>so larger to my eyes<br><br>that i stopped gauging, satisfied,<br><br>for this enchanted size<br><br>it was the limit of my dream,<br><br>the focus of my prayer, --<br><br>a perfect, paralyzing bliss<br><br>contented as despair<br><br>i knew no more of want or cold,<br>";
-        toR.resolve(poem);
-        return;
-      }
-      poem = poem.join("<br />");
-      toR.resolve(poem);
-    });
-  }
-  return toR.promise;
-
+  // var toR = Q.defer();
+  // var options = { pythonPath: 'python3'};
   //
-  // Model.count().exec(function(err, count){
-  //   var random = Math.floor(Math.random() * count);
-  //   Model.findOne().skip(random).exec(
-  //     function (err, result) {
-  //       // result is random
-  //     });
-  //
-  // });
+  // if (type =="rnn") {
+  //   pythonShell.run('pick_selection_rnn.py', options, function (err, poem) {
+  //     if (poem == null) {
+  //       if (err) console.log(err);
+  //       poem = "of his elect content,<br>conform my soul as t were a church<br><br>unto her sacrament<br><br>love<br><br>love is anterior to life,<br><br>posterior to death,<br><br>initial of creation, and<br><br>the exponent of breath<br><br>satisfied<br><br>one blessing had i, than the rest<br><br>so larger to my eyes<br><br>that i stopped gauging, satisfied,<br><br>for this enchanted size<br><br>it was the limit of my dream,<br><br>the focus of my prayer, --<br><br>a perfect, paralyzing bliss<br><br>contented as despair<br><br>i knew no more of want or cold,<br>";
+  //       toR.resolve(poem);
+  //       return;
+  //     }
+  //     poem = poem.join("<br />");
+  //     toR.resolve(poem);
+  //   });
+  // } else if (type == "human") {
+  //   pythonShell.run('pick_selection_human.py', options, function (err, poem) {
+  //     if (poem == null) {
+  //       if (err) console.log(err);
+  //       poem = "of his elect content,<br>conform my soul as t were a church<br><br>unto her sacrament<br><br>love<br><br>love is anterior to life,<br><br>posterior to death,<br><br>initial of creation, and<br><br>the exponent of breath<br><br>satisfied<br><br>one blessing had i, than the rest<br><br>so larger to my eyes<br><br>that i stopped gauging, satisfied,<br><br>for this enchanted size<br><br>it was the limit of my dream,<br><br>the focus of my prayer, --<br><br>a perfect, paralyzing bliss<br><br>contented as despair<br><br>i knew no more of want or cold,<br>";
+  //       toR.resolve(poem);
+  //       return;
+  //     }
+  //     poem = poem.join("<br />");
+  //     toR.resolve(poem);
+  //   });
+  // }
+  // return toR.promise;
+
+  var author = type == "rnn"? "Computer" : "Human";
+
+  // @todo: this is not working yet
+  Poem
+    .find({"author" : author})
+    .count().exec(function(err, count){
+      var random = Math.floor(Math.random() * count);
+      Poem.find({"author":author}).findOne().skip(random).exec(
+        function (err, result) {
+          // result is random poem
+          console.log(result.content);
+          return result.content;
+        });
+  });
+
 }
 
 function generateTrial() {
@@ -80,17 +97,25 @@ function generateTrial() {
 
   var poem = getPoem(type);
 
-  return poem.then(function (poem) {
-    return Q.all([0.35, 0.35])
-      .then(function (sent) {
-        return {
-          "poem": poem,
-          "trial_id": trial_id,
-          "poem1sentiment": sentToColor(sent[0]),
-          "poem1textcolor": textColor(sent[0])
-        };
-      });
-  });
+  // return poem.then(function (poem) {
+  //   return Q.all([0.35, 0.35])
+  //     .then(function (sent) {
+  //       return {
+  //         "poem": poem,
+  //         "trial_id": trial_id,
+  //         "poem1sentiment": sentToColor(sent[0]),
+  //         "poem1textcolor": textColor(sent[0])
+  //       };
+  //     });
+  // });
+  return {
+    "poem": poem,
+    "trial_id": trial_id,
+    "poem1sentiment": sentToColor(0.5),
+    "poem1textcolor": textColor(0.5)
+  };
+
+
 }
 
 function sentToColor(num) {
@@ -177,14 +202,11 @@ app.get('/chartInfo', function(req, res){
 });
 
 app.get('/', function (req, res) {
-  generateTrial().then(function (trial) {
-    res.render('turing',
-      { "poem1": trial.poem,
-        "trial_id": trial.trial_id,
-        "poem1sentiment": trial.poem1sentiment,
-        "poem1textcolor": trial.poem1textcolor,
-      });
-  });
+  var trial = generateTrial();
+  res.render('turing',
+    { "poem1": trial.poem,
+      "trial_id": trial.trial_id
+    });
 });
 
 app.post('/ajaxSendData', function(req, res) {
@@ -200,6 +222,12 @@ app.post('/ajaxSendData', function(req, res) {
   res.send({"result": trials[req.body.trial_id].clicked_human !== trials[req.body.trial_id].fake_poem});
 });
 
+app.post('/test', function(req, res) {
+  console.log(req.body);
+  // res.redirect('/');
+});
+
+
 app.get('/ajaxGetData', function(req, res){
   generateTrial().then(function (trial) {
     res.send({ "poem1": trial.poem,
@@ -210,20 +238,10 @@ app.get('/ajaxGetData', function(req, res){
   });
 });
 
-app.get('/scores', function(req, res) {
-  res.render("leaderboard", {});
-});
-
-app.get('/scoreboard', function (req, res) {
-  var people = [
-    { "name": "John", "correct": 5, "incorrect": 5, "percent correct": "50%"},
-    { "name": "Some other guy", "correct": 100, "incorrect": 25, "percent correct": "asfa$%"},
-    { "name": "mmmhmmm", "correct": 22, "incorrect": 2, "percent correct": "%gds%"}
-  ]
-  res.render('scoreboard', {"people": people});
-});
 
 var port = process.env.PORT || 8080;
 app.listen(port, "0.0.0.0", function () {
   console.log("Running on port " + port);
 });
+
+module.exports = app;
