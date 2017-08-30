@@ -24,8 +24,8 @@ The website was built on NodeJs and the color scheme changes depending on the mo
 
 
 ## How to run it:
-````npm install```
-````npm start```
+```npm install```  
+```npm start```  
 
 ## How to import a sample poem database
 ```mongoimport --db poetrygen --collection poems --drop --file PATH-TO-GIT-REPO/Poem-db-init.json```
