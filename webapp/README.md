@@ -18,9 +18,9 @@ The website was built on NodeJs and the color scheme changes depending on the mo
 
 ## Dependency:
 
-- Node.js
-- npm
-- MongoDB
+- Node.js  
+- npm  
+- MongoDB  
 
 
 ## How to run it:
@@ -33,3 +33,5 @@ The website was built on NodeJs and the color scheme changes depending on the mo
 # Acknowledgement
 Thanks to Ryan Marcus for [the great project](https://github.com/RyanMarcus/EdgarAllanPoetry)
 Our implementation of RNN was mainly based on [this paper](https://arxiv.org/abs/1610.09889)
+
+
