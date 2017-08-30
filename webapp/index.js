@@ -34,7 +34,7 @@ var last_trial_id = 0;
 var trials = {};
 
 function getPoem(type) {
-  // var toR = Q.defer();
+  var toR = Q.defer();
   // var options = { pythonPath: 'python3'};
   //
   // if (type =="rnn") {
@@ -72,11 +72,11 @@ function getPoem(type) {
       Poem.find({"author":author}).findOne().skip(random).exec(
         function (err, result) {
           // result is random poem
-          console.log(result.content);
-          return result.content;
+          poem = result.content;
+          toR.resolve(poem);
         });
   });
-
+  return toR.promise;
 }
 
 function generateTrial() {
@@ -97,6 +97,15 @@ function generateTrial() {
 
   var poem = getPoem(type);
 
+  return poem.then(function (poem) {
+    return {
+      "poem": poem,
+      "trial_id": trial_id,
+      "poem1sentiment": sentToColor(0.5),
+      "poem1textcolor": textColor(0.5)
+    };
+  });
+
   // return poem.then(function (poem) {
   //   return Q.all([0.35, 0.35])
   //     .then(function (sent) {
@@ -108,13 +117,6 @@ function generateTrial() {
   //       };
   //     });
   // });
-  return {
-    "poem": poem,
-    "trial_id": trial_id,
-    "poem1sentiment": sentToColor(0.5),
-    "poem1textcolor": textColor(0.5)
-  };
-
 
 }
 
@@ -202,11 +204,12 @@ app.get('/chartInfo', function(req, res){
 });
 
 app.get('/', function (req, res) {
-  var trial = generateTrial();
-  res.render('turing',
-    { "poem1": trial.poem,
-      "trial_id": trial.trial_id
-    });
+  generateTrial().then(function (trial) {
+    res.render('turing',
+        { "poem1": trial.poem,
+          "trial_id": trial.trial_id
+        });
+  });
 });
 
 app.post('/ajaxSendData', function(req, res) {
