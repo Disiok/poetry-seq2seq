@@ -44,7 +44,7 @@
 
       <div class="row">
         <div class="col">
-            <div class="poem wordwrap" id="choice1" style="background-color: {{poem1sentiment}}; color: {{poem1textcolor}}">{{{poem1}}}</div>
+            <div class="poem wordwrap" id="choice1" style="background-color: {{poem1sentiment}}; color: {{poem1textcolor}}" poem_id="{{poem_id}}" author="{{author}}">{{{poem1}}}</div>
         </div>
       </div>
 
@@ -58,7 +58,7 @@
       <!--</div>-->
 
 
-      <form class="form-rate-poem" action="test" method="post">
+      <form class="form-rate-poem" id="turing-form" method="post">
         <br>
         <label>Readability</label>
         <div data-toggle="buttons">
@@ -128,15 +128,15 @@
         <div data-toggle="buttons">
           <div class="btn-group" id="overall-btn-group">
             <label class="btn btn-primary">
-              <input type="radio" value="1" name="type" class="sr-only rd1" required>1</label>
+              <input type="radio" value="1" name="overall" class="sr-only rd1" required>1</label>
             <label class="btn btn-primary">
-              <input type="radio" value="2" name="type" class="sr-only rd2" required>2</label>
+              <input type="radio" value="2" name="overall" class="sr-only rd2" required>2</label>
             <label class="btn btn-primary">
-              <input type="radio" value="3" name="type" class="sr-only rd3" required>3</label>
+              <input type="radio" value="3" name="overall" class="sr-only rd3" required>3</label>
             <label class="btn btn-primary">
-              <input type="radio" value="4" name="type" class="sr-only rd4" required>4</label>
+              <input type="radio" value="4" name="overall" class="sr-only rd4" required>4</label>
             <label class="btn btn-primary">
-              <input type="radio" value="5" name="type" class="sr-only rd5" required>5</label>
+              <input type="radio" value="5" name="overall" class="sr-only rd5" required>5</label>
           </div>
         </div>
 
@@ -144,14 +144,14 @@
         <div data-toggle="buttons">
           <div class="btn-group" id="turing-btn-group">
             <label class="btn btn-primary">
-              <input type="radio" value="1" name="turing" class="sr-only rd1" required>Computer</label>
+              <input type="radio" value="Computer" name="author" class="sr-only rd1" required>Computer</label>
             <label class="btn btn-primary">
-              <input type="radio" value="2" name="turing" class="sr-only rd2" required>Human</label>
+              <input type="radio" value="Human" name="author" class="sr-only rd2" required>Human</label>
           </div>
         </div>
 
         <br>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
+        <button id="turing-button" class="btn btn-lg btn-primary btn-block">Submit</button>
       </form>
 
     </div>

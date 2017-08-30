@@ -26,6 +26,17 @@ $(document).ready(function() {
 
     updatePoems();
   });
+
+  $("#turing-form").submit(function (event) {
+    $.post("ajaxSendData",
+      $("#turing-form").serialize() + '&poem=' + $('#choice1').attr('poem_id'),
+      function(res) {
+        updateCounter(res.result);
+      });
+    updatePoems();
+
+    event.preventDefault();
+  });
 });
 
 

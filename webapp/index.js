@@ -2,15 +2,18 @@ var express = require('express');
 var app = express();
 var Q = require("q");
 
-//database
+// database
 var mongoose = require('mongoose');
 var dbName = 'poetrygen';
 var connectionString = 'mongodb://localhost/' + dbName;
 mongoose.connect(connectionString);
 
-var P = require('./models/poem')
+// models
+var P = require('./models/poem');
+var T = require('./models/turing');
 
 var Poem = mongoose.model('Poem', mongoose.model('Poem').schema);
+var Turing = mongoose.model('Turing', mongoose.model('Turing').schema);
 
 Poem.find({}).exec(function(error, collection) {
   if (collection.length === 0 ) {
@@ -72,8 +75,7 @@ function getPoem(type) {
       Poem.find({"author":author}).findOne().skip(random).exec(
         function (err, result) {
           // result is random poem
-          poem = result.content;
-          toR.resolve(poem);
+          toR.resolve(result);
         });
   });
   return toR.promise;
@@ -99,7 +101,8 @@ function generateTrial() {
 
   return poem.then(function (poem) {
     return {
-      "poem": poem,
+      "poem_id": poem._id,
+      "poem": poem.content,
       "trial_id": trial_id,
       "poem1sentiment": sentToColor(0.5),
       "poem1textcolor": textColor(0.5)
@@ -207,12 +210,26 @@ app.get('/', function (req, res) {
   generateTrial().then(function (trial) {
     res.render('turing',
         { "poem1": trial.poem,
-          "trial_id": trial.trial_id
+        "poem_id": trial.poem_id,
+        "trial_id": trial.trial_id,
+        "poem1sentiment": trial.poem1sentiment,
+        "poem1textcolor": trial.poem1textcolor
         });
   });
 });
 
 app.post('/ajaxSendData', function(req, res) {
+  console.log(req.body);
+
+  Turing.create(req.body, function(error, obj) {
+    if (error) {
+      console.log('Document creation failed.');
+      console.log(error);
+    } else {
+      console.log('Document creation succeeded')
+    }
+  });
+
   if (!(req.body.trial_id in trials)) {
     res.send({"result": false});
     return;
@@ -234,8 +251,9 @@ app.post('/test', function(req, res) {
 app.get('/ajaxGetData', function(req, res){
   generateTrial().then(function (trial) {
     res.send({ "poem1": trial.poem,
+      "poem_id": trial.poem_id,
       "trial_id": trial.trial_id,
-      "poem1color": trial.poem1sentiment,
+      "poem1sentiment": trial.poem1sentiment,
       "poem1textcolor": trial.poem1textcolor
     });
   });
