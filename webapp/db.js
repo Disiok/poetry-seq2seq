@@ -19,39 +19,33 @@ Poem.find({}).exec(function(error, collection) {
   }
 });
 
+// global variable
 var last_trial_id = 0;
 var trials = {};
 
 function getPoem(type) {
   var toR = Q.defer();
 
-  var author = type == "rnn"? "Computer" : "Human";
-
   Poem
-    .find({"author" : author})
+    .find({"author": type})
     .count().exec(function(err, count){
       var random = Math.floor(Math.random() * count);
-      Poem.find({"author":author}).findOne().skip(random).exec(
-        function (err, result) {
-          // result is random poem
-          toR.resolve(result);
+      Poem.find({"author": type}).findOne().skip(random).exec(
+        function (err, poem) {
+          toR.resolve(poem);
         });
   });
   return toR.promise;
 }
 
 function generateTrial() {
-  var toR = Q.defer();
 
-  // pick if we are using RNN or human
-  // fake_id True: rnn, False: human
-  // kinda redundant but I am lazy to change it due to legacy code
-  var fake_id = flip() == 0;
-  var type = fake_id? "rnn": "human";
+  var types = ['Human', 'Computer']
+  var type = randomChoice(types)
+
   var trial_id = last_trial_id++;
 
   trials[trial_id] = {
-    "fake_poem": fake_id,
     "type": type,
 		"user_responded": false
   };
@@ -67,19 +61,6 @@ function generateTrial() {
       "poem1textcolor": textColor(0.5)
     };
   });
-
-  // return poem.then(function (poem) {
-  //   return Q.all([0.35, 0.35])
-  //     .then(function (sent) {
-  //       return {
-  //         "poem": poem,
-  //         "trial_id": trial_id,
-  //         "poem1sentiment": sentToColor(sent[0]),
-  //         "poem1textcolor": textColor(sent[0])
-  //       };
-  //     });
-  // });
-
 }
 
 function sentToColor(num) {
@@ -114,8 +95,9 @@ function textColor(num) {
   }
 }
 
-function flip() {
-  return Math.floor((Math.random() * 2));
+function randomChoice(choices) {
+  index = Math.floor(choices.length * Math.random())
+  return choices[index];
 }
 
 function tallyResults() {
