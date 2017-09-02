@@ -151,10 +151,11 @@ function tallyResults() {
     "humanClickedHuman": humanClickedHuman};
 }
 
-
+// exports
 module.exports = {
 	trials,
 	generateTrial,
+	tallyResults,
 	Turing,
 	Poem
 }

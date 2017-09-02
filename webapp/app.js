@@ -1,21 +1,19 @@
 // includes
 var db = require('./db');
+var express = require('express');
+const mustache = require('mustache-express');
+const bodyParser = require('body-parser');
 
 // application
-var express = require('express');
 var app = express();
 
 app.use("/", express.static('public'));
-
-const pythonShell = require('python-shell');
-const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 
-const mustache = require('mustache-express');
 app.engine('mustache', mustache());
 app.set('view engine', 'mustache');
 
-// get endpoints
+// GET endpoints
 app.get('/', function (req, res) {
   db.generateTrial().then(function (trial) {
     res.render('turing',
@@ -33,7 +31,7 @@ app.get('/charts', function(req, res) {
 });
 
 app.get('/chartInfo', function(req, res){
-  var results = tallyResults();
+  var results = db.tallyResults();
   // all added one to avoid render problem in chart
   results.humanClickedHuman += 1;
   results.humanTotal += 2;
@@ -53,13 +51,14 @@ app.get('/ajaxGetData', function(req, res){
   });
 });
 
-// post endpoints
+// POST endpoints
 app.post('/ajaxSendData', function(req, res) {
+  console.log('Received survey result: ')
   console.log(req.body);
 
   db.Turing.create(req.body, function(error, obj) {
     if (error) {
-      console.log('Document creation failed.');
+      console.log('Document creation failed. Error: ');
       console.log(error);
     } else {
       console.log('Document creation succeeded')
@@ -78,11 +77,6 @@ app.post('/ajaxSendData', function(req, res) {
   res.send({"result": trials[req.body.trial_id].clicked_human !== trials[req.body.trial_id].fake_poem});
 });
 
-app.post('/test', function(req, res) {
-  console.log(req.body);
-  // res.redirect('/');
-});
-
 
 // running application
 var port = process.env.PORT || 8080;
@@ -90,4 +84,5 @@ app.listen(port, "0.0.0.0", function () {
   console.log("Running on port " + port);
 });
 
+// exports
 module.exports = app;
