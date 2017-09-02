@@ -133,11 +133,42 @@ function tallyResults() {
     "humanClickedHuman": humanClickedHuman};
 }
 
+function createRecord(guess) {
+  Turing.create(guess, function(error, obj) {
+    if (error) {
+      console.log('Failed to record user guess. Error: ');
+      console.log(error);
+    } else {
+      console.log('User guess successfully recorded!')
+    }
+  });
+}
+
+function isGuessCorrect(guess) {
+  var toR = Q.defer();
+
+  Poem.findById(guess.poem).exec(function(error, poem) {
+    if (error) {
+      console.log('Cannot find poem with id: ' + guess.poem);
+
+      toR.resolve(false);
+    } else {
+      isCorrect = (poem.author == guess.author);
+      console.log('User guess is ' + (isCorrect? 'correct' : 'incorrect') + '.');
+      console.log('The poem is writte by ' + poem.author + ' but user guessed ' + guess.author + '.');
+      
+      toR.resolve(isCorrect);
+    }
+  });
+
+  return toR.promise;
+}
+
 // exports
 module.exports = {
 	trials,
 	generateTrial,
 	tallyResults,
-	Turing,
-	Poem
+  createRecord,
+  isGuessCorrect
 }

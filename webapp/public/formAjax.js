@@ -31,6 +31,7 @@ $(document).ready(function() {
     $.post("ajaxSendData",
       $("#turing-form").serialize() + '&poem=' + $('#choice1').attr('poem_id'),
       function(res) {
+        console.log(res.result? 'Ajax correct': 'Ajax incorrect');
         updateCounter(res.result);
       });
     updatePoems();
@@ -54,6 +55,8 @@ function updateCounter(result) {
 function updatePoems(){
   $.ajax({url: "/ajaxGetData", success: function(result){
     document.getElementById('choice1').innerHTML = result.poem1;
+
+    $('#choice1').attr('poem_id', result.poem_id)
 
     $('#choice1').css('background-color', result.poem1color);
     $('#choice2').css('background-color', result.poem2color);

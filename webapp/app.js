@@ -53,28 +53,15 @@ app.get('/ajaxGetData', function(req, res){
 
 // POST endpoints
 app.post('/ajaxSendData', function(req, res) {
-  console.log('Received survey result: ')
-  console.log(req.body);
+  guess = req.body;
 
-  db.Turing.create(req.body, function(error, obj) {
-    if (error) {
-      console.log('Document creation failed. Error: ');
-      console.log(error);
-    } else {
-      console.log('Document creation succeeded')
-    }
-  });
+  console.log('Received survey result: ');
+  console.log(guess);
 
-  if (!(req.body.trial_id in db.trials)) {
-    res.send({"result": false});
-    return;
-  }
-  db.trials[req.body.trial_id].user_responded = req.body.user_responded === "true";
-  db.trials[req.body.trial_id].clicked_human = req.body.clicked_human === "true";
-
-  // return true if correct
-  // correct: clicked_human (true if user clicked humanButton) !== fake_poem (not from human)
-  res.send({"result": trials[req.body.trial_id].clicked_human !== trials[req.body.trial_id].fake_poem});
+  db.createRecord(req.body);
+  db.isGuessCorrect(guess).then(function (isCorrect) {
+    res.send({"result": isCorrect});
+  })
 });
 
 
