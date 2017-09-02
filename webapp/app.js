@@ -1,19 +1,22 @@
+// imports
 var express = require('express');
-var app = express();
 var Q = require("q");
+var P = require('./models/poem');
+var T = require('./models/turing');
 
-// database
+// application
+var app = express();
+
+// database connection
 var mongoose = require('mongoose');
 var dbName = 'poetrygen';
 var connectionString = 'mongodb://localhost/' + dbName;
 mongoose.connect(connectionString);
 
 // models
-var P = require('./models/poem');
-var T = require('./models/turing');
-
 var Poem = mongoose.model('Poem', mongoose.model('Poem').schema);
 var Turing = mongoose.model('Turing', mongoose.model('Turing').schema);
+
 
 Poem.find({}).exec(function(error, collection) {
   if (collection.length === 0 ) {
@@ -24,7 +27,6 @@ Poem.find({}).exec(function(error, collection) {
 
 app.use("/", express.static('public'));
 
-const pythonShell = require('python-shell');
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -38,36 +40,8 @@ var trials = {};
 
 function getPoem(type) {
   var toR = Q.defer();
-  // var options = { pythonPath: 'python3'};
-  //
-  // if (type =="rnn") {
-  //   pythonShell.run('pick_selection_rnn.py', options, function (err, poem) {
-  //     if (poem == null) {
-  //       if (err) console.log(err);
-  //       poem = "of his elect content,<br>conform my soul as t were a church<br><br>unto her sacrament<br><br>love<br><br>love is anterior to life,<br><br>posterior to death,<br><br>initial of creation, and<br><br>the exponent of breath<br><br>satisfied<br><br>one blessing had i, than the rest<br><br>so larger to my eyes<br><br>that i stopped gauging, satisfied,<br><br>for this enchanted size<br><br>it was the limit of my dream,<br><br>the focus of my prayer, --<br><br>a perfect, paralyzing bliss<br><br>contented as despair<br><br>i knew no more of want or cold,<br>";
-  //       toR.resolve(poem);
-  //       return;
-  //     }
-  //     poem = poem.join("<br />");
-  //     toR.resolve(poem);
-  //   });
-  // } else if (type == "human") {
-  //   pythonShell.run('pick_selection_human.py', options, function (err, poem) {
-  //     if (poem == null) {
-  //       if (err) console.log(err);
-  //       poem = "of his elect content,<br>conform my soul as t were a church<br><br>unto her sacrament<br><br>love<br><br>love is anterior to life,<br><br>posterior to death,<br><br>initial of creation, and<br><br>the exponent of breath<br><br>satisfied<br><br>one blessing had i, than the rest<br><br>so larger to my eyes<br><br>that i stopped gauging, satisfied,<br><br>for this enchanted size<br><br>it was the limit of my dream,<br><br>the focus of my prayer, --<br><br>a perfect, paralyzing bliss<br><br>contented as despair<br><br>i knew no more of want or cold,<br>";
-  //       toR.resolve(poem);
-  //       return;
-  //     }
-  //     poem = poem.join("<br />");
-  //     toR.resolve(poem);
-  //   });
-  // }
-  // return toR.promise;
-
   var author = type == "rnn"? "Computer" : "Human";
 
-  // @todo: this is not working yet
   Poem
     .find({"author" : author})
     .count().exec(function(err, count){
@@ -192,6 +166,8 @@ function tallyResults() {
     "humanClickedHuman": humanClickedHuman};
 }
 
+
+// endpoints
 app.get('/charts', function(req, res) {
   res.render('charts');
 });
@@ -242,14 +218,10 @@ app.post('/ajaxSendData', function(req, res) {
   res.send({"result": trials[req.body.trial_id].clicked_human !== trials[req.body.trial_id].fake_poem});
 });
 
-app.post('/test', function(req, res) {
-  console.log(req.body);
-  // res.redirect('/');
-});
-
 
 app.get('/ajaxGetData', function(req, res){
   generateTrial().then(function (trial) {
+    lined_poem = trial.poem.split('/(?!、)/g')
     res.send({ "poem1": trial.poem,
       "poem_id": trial.poem_id,
       "trial_id": trial.trial_id,
