@@ -18,14 +18,20 @@ The website was built on NodeJs and the color scheme changes depending on the mo
 
 ## Dependency:
 
-- Node.js
-- npm
+- Node.js  
+- npm  
+- MongoDB  
 
 
 ## How to run it:
-`npm install`
-`npm start`
+```npm install```  
+```npm start```  
+
+## How to import a sample poem database
+```mongoimport --db poetrygen --collection poems --drop --file PATH-TO-GIT-REPO/Poem-db-init.json```
 
 # Acknowledgement
 Thanks to Ryan Marcus for [the great project](https://github.com/RyanMarcus/EdgarAllanPoetry)
 Our implementation of RNN was mainly based on [this paper](https://arxiv.org/abs/1610.09889)
+
+
