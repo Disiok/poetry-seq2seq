@@ -1,11 +1,8 @@
-.wordwrap {
-   white-space: pre-wrap;      /* CSS3 */
-   white-space: -moz-pre-wrap; /* Firefox */
-   white-space: -pre-wrap;     /* Opera <7 */
-   white-space: -o-pre-wrap;   /* Opera 7 */
-   word-wrap: break-word;      /* IE */
+body {
+  font-family: "Helvetica Neue",Helvetica,Arial,"Hiragino Sans GB","Hiragino Sans GB W3","Microsoft YaHei UI","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
 }
 
+/*
 body {
   background-color: #F2F1EF;
   background: repeating-linear-gradient(
@@ -78,3 +75,4 @@ h2 {
     font-size:2em;
   }
 }
+*/

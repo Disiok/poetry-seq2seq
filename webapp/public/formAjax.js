@@ -1,62 +1,49 @@
 $(document).ready(function() {
-  $("#humanButton").click(function() {
-    var trial_id = $("#humanButton").attr("trial_id");
-    var poem_id = 0;
-    $.post("/ajaxSendData",
-      {'trial_id': trial_id,
-        'clicked_human': true,
-        'user_responded': true},
-      function (res) {
-        updateCounter(res.result);
-      });
-
-    updatePoems();
-  });
-
-  $("#computerButton").click(function() {
-    var trial_id = $("#computerButton").attr("trial_id");
-    var poem_id = 1;
-    $.post("/ajaxSendData",
-      {'trial_id': trial_id,
-        'clicked_human': false,
-        'user_responded': true},
-      function (res) {
-        updateCounter(res.result);
-      });
-
-    updatePoems();
-  });
-
   $("#turing-form").submit(function (event) {
-    $.post("ajaxSendData",
-      $("#turing-form").serialize() + '&poem=' + $('#choice1').attr('poem_id'),
+    event.preventDefault();
+
+    $.post(
+      "ajaxSendData",
+      $("#turing-form").serialize() + '&poem=' + $('#poem-content').attr('poem_id'),
       function(res) {
         console.log(res.result? 'Ajax correct': 'Ajax incorrect');
         updateCounter(res.result);
-      });
+      }
+    );
+
+    updatePoems();
+  });
+
+  $("#skip-button").click(function (event) {
     updatePoems();
 
     event.preventDefault();
-  });
+  })
 });
 
 
 var correct = 0;
 var total = 0;
-function updateCounter(result) {
-  if (result)
+
+function updateCounter(isCorrect) {
+  if (isCorrect)
     correct++;
   total++;
   var percent = ~~(100 * correct/total);
-	// alert(result);
+
   $("#score").text(percent + "%" + " (" + correct + "/" + total + ")");
+
+  $('#score-indicator').text(isCorrect? "Correct" : "Incorrect"); 
+  $('#score-indicator').removeClass().addClass(isCorrect? 'badge badge-success' : 'badge badge-danger');
 }
 
 function updatePoems(){
   $.ajax({url: "/ajaxGetData", success: function(result){
-    document.getElementById('choice1').innerHTML = result.poem1;
+    $('#poem-content').html(result.poem);
+    // document.getElementById('poem-content').innerHTML = result.poem;
 
-    $('#choice1').attr('poem_id', result.poem_id)
+    $('#poem-content').attr('poem_id', result.poem_id);
+    $('#poem-id').text(result.poem_id);
 
   }});
 }

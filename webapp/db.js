@@ -32,6 +32,16 @@ function getPoem(type) {
       var random = Math.floor(Math.random() * count);
       Poem.find({"author": type}).findOne().skip(random).exec(
         function (err, poem) {
+          var tokens = poem.content.match(/[^，。]+[，。]/g);
+          console.log(tokens);
+
+          if (tokens) {
+            var lines = tokens.join('<br />')
+            poem.content = lines;
+          } else {
+            console.log('Invalid line tokens.')
+          }
+
           toR.resolve(poem);
         });
   });

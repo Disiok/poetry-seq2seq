@@ -17,11 +17,9 @@ app.set('view engine', 'mustache');
 app.get('/', function (req, res) {
   db.generateTrial().then(function (trial) {
     res.render('turing',
-        { "poem1": trial.poem,
+        { "poem": trial.poem,
         "poem_id": trial.poem_id,
-        "trial_id": trial.trial_id,
-        "poem1sentiment": trial.poem1sentiment,
-        "poem1textcolor": trial.poem1textcolor
+        "trial_id": trial.trial_id
         });
   });
 });
@@ -42,11 +40,9 @@ app.get('/chartInfo', function(req, res){
 
 app.get('/ajaxGetData', function(req, res){
   db.generateTrial().then(function (trial) {
-    res.send({ "poem1": trial.poem,
+    res.send({ "poem": trial.poem,
       "poem_id": trial.poem_id,
-      "trial_id": trial.trial_id,
-      "poem1sentiment": trial.poem1sentiment,
-      "poem1textcolor": trial.poem1textcolor
+      "trial_id": trial.trial_id
     });
   });
 });
