@@ -58,12 +58,5 @@ function updatePoems(){
 
     $('#choice1').attr('poem_id', result.poem_id)
 
-    $('#choice1').css('background-color', result.poem1color);
-    $('#choice2').css('background-color', result.poem2color);
-    $('#choice1').css('color', result.poem1textcolor);
-    $('#choice2').css('color', result.poem2textcolor);
-
-    $('#humanButton').attr('trial_id', result.trial_id);
-    $('#computerButton').attr('trial_id', result.trial_id);
   }});
 }

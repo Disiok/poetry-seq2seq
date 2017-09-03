@@ -1,38 +1,43 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <title>Poetry Generation</title>
 
+    <!--Bootstrap stylesheet-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+
+    <!--
     <link rel="stylesheet" href="/skeleton.css" type="css">
     <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="/style.css" type="text/css" />
+    -->
 
-    <!--bootstrap-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-    <!--bootstrap-->
-
+    <!--
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    -->
+    
     <script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+
+    <!-- custom -->
     <script src="/formAjax.js"></script>
-
-
   </head>
   <body>
 
-    <!-- <div class="band navigation">
-	 <nav class="container primary">
-           <div class="sixteen columns">
-             <ul>
-               <li><a href="index.html">Home</a></li>
-               <li><a href="#">About Us</a></li>
-               <li><a href="#">Projects</a></li>
-               <li><a href="#">Contact Us</a></li>
-             </ul>
-           </div>
-	 </nav>
-    </div> -->
+    <!-- Image and text -->
+    <nav class="navbar navbar-light bg-light">
+      <a class="navbar-brand" href="#">
+        <img src="/assets/brand/bootstrap-solid.svg" width="30" height="30" class="d-inline-block align-top" alt="">
+        Chinese Poetry Turing Test
+      </a>
+    </nav>  
 
     <div class="container">
       <div class="row justify-content-md-center">
@@ -42,119 +47,115 @@
         </div>
       </div>
 
+
+
       <div class="row">
         <div class="col">
-            <div class="poem wordwrap" id="choice1" style="background-color: {{poem1sentiment}}; color: {{poem1textcolor}}" poem_id="{{poem_id}}" author="{{author}}">{{{poem1}}}</div>
+          <div class="jumbotron"> 
+            <div class="poem wordwrap" id="choice1" poem_id="{{poem_id}}" author="{{author}}">
+              {{{poem1}}}
+            </div>
+          </div>
+        </div>
+
+        <div class="col">
+          <form class="form-rate-poem" id="turing-form" method="post">
+            <br>
+            <label>Readability</label>
+            <div data-toggle="buttons">
+              <div class="btn-group" id="readability-btn-group">
+                <label class="btn btn-primary">
+                  <input type="radio" value="1" name="readability" class="sr-only rd1" required>1</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="2" name="readability" class="sr-only rd2" required>2</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="3" name="readability" class="sr-only rd3" required>3</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="4" name="readability" class="sr-only rd4" required>4</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="5" name="readability" class="sr-only rd5" required>5</label>
+              </div>
+            </div>
+
+            <label>Consistency</label>
+            <div data-toggle="buttons">
+              <div class="btn-group" id="consistency-btn-group">
+                <label class="btn btn-primary">
+                  <input type="radio" value="1" name="consistency" class="sr-only rd1" required>1</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="2" name="consistency" class="sr-only rd2" required>2</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="3" name="consistency" class="sr-only rd3" required>3</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="4" name="consistency" class="sr-only rd4" required>4</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="5" name="consistency" class="sr-only rd5" required>5</label>
+              </div>
+            </div>
+
+            <label>Poeticness</label>
+            <div data-toggle="buttons">
+              <div class="btn-group" id="poeticness-btn-group">
+                <label class="btn btn-primary">
+                  <input type="radio" value="1" name="poeticness" class="sr-only rd1" required>1</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="2" name="poeticness" class="sr-only rd2" required>2</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="3" name="poeticness" class="sr-only rd3" required>3</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="4" name="poeticness" class="sr-only rd4" required>4</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="5" name="poeticness" class="sr-only rd5" required>5</label>
+              </div>
+            </div>
+
+            <label>Evocative</label>
+            <div data-toggle="buttons">
+              <div class="btn-group" id="evocative-btn-group">
+                <label class="btn btn-primary">
+                  <input type="radio" value="1" name="evocative" class="sr-only rd1" required>1</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="2" name="evocative" class="sr-only rd2" required>2</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="3" name="evocative" class="sr-only rd3" required>3</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="4" name="evocative" class="sr-only rd4" required>4</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="5" name="evocative" class="sr-only rd5" required>5</label>
+              </div>
+            </div>
+
+            <label>Overall</label>
+            <div data-toggle="buttons">
+              <div class="btn-group" id="overall-btn-group">
+                <label class="btn btn-primary">
+                  <input type="radio" value="1" name="overall" class="sr-only rd1" required>1</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="2" name="overall" class="sr-only rd2" required>2</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="3" name="overall" class="sr-only rd3" required>3</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="4" name="overall" class="sr-only rd4" required>4</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="5" name="overall" class="sr-only rd5" required>5</label>
+              </div>
+            </div>
+
+            <label>Can you guess if the poetry sample was written by a person?</label>
+            <div data-toggle="buttons">
+              <div class="btn-group" id="turing-btn-group">
+                <label class="btn btn-primary">
+                  <input type="radio" value="Computer" name="author" class="sr-only rd1" required>Computer</label>
+                <label class="btn btn-primary">
+                  <input type="radio" value="Human" name="author" class="sr-only rd2" required>Human</label>
+              </div>
+            </div>
+
+            <br>
+            <button id="turing-button" class="btn btn-lg btn-primary btn-block">Submit</button>
+          </form>
         </div>
       </div>
-
-      <!--<div class="row">-->
-        <!--<div class="col">-->
-          <!--<button id="humanButton" trial_id="{{ trial_id }}" class="poemButton">Human</button>-->
-        <!--</div>-->
-        <!--<div class="col">-->
-          <!--<button id="computerButton" trial_id="{{ trial_id }}" class="poemButton">Computer</button>-->
-        <!--</div>-->
-      <!--</div>-->
-
-
-      <form class="form-rate-poem" id="turing-form" method="post">
-        <br>
-        <label>Readability</label>
-        <div data-toggle="buttons">
-          <div class="btn-group" id="readability-btn-group">
-            <label class="btn btn-primary">
-              <input type="radio" value="1" name="readability" class="sr-only rd1" required>1</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="2" name="readability" class="sr-only rd2" required>2</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="3" name="readability" class="sr-only rd3" required>3</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="4" name="readability" class="sr-only rd4" required>4</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="5" name="readability" class="sr-only rd5" required>5</label>
-          </div>
-        </div>
-
-        <label>Consistency</label>
-        <div data-toggle="buttons">
-          <div class="btn-group" id="consistency-btn-group">
-            <label class="btn btn-primary">
-              <input type="radio" value="1" name="consistency" class="sr-only rd1" required>1</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="2" name="consistency" class="sr-only rd2" required>2</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="3" name="consistency" class="sr-only rd3" required>3</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="4" name="consistency" class="sr-only rd4" required>4</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="5" name="consistency" class="sr-only rd5" required>5</label>
-          </div>
-        </div>
-
-        <label>Poeticness</label>
-        <div data-toggle="buttons">
-          <div class="btn-group" id="poeticness-btn-group">
-            <label class="btn btn-primary">
-              <input type="radio" value="1" name="poeticness" class="sr-only rd1" required>1</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="2" name="poeticness" class="sr-only rd2" required>2</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="3" name="poeticness" class="sr-only rd3" required>3</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="4" name="poeticness" class="sr-only rd4" required>4</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="5" name="poeticness" class="sr-only rd5" required>5</label>
-          </div>
-        </div>
-
-        <label>Evocative</label>
-        <div data-toggle="buttons">
-          <div class="btn-group" id="evocative-btn-group">
-            <label class="btn btn-primary">
-              <input type="radio" value="1" name="evocative" class="sr-only rd1" required>1</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="2" name="evocative" class="sr-only rd2" required>2</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="3" name="evocative" class="sr-only rd3" required>3</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="4" name="evocative" class="sr-only rd4" required>4</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="5" name="evocative" class="sr-only rd5" required>5</label>
-          </div>
-        </div>
-
-        <label>Overall</label>
-        <div data-toggle="buttons">
-          <div class="btn-group" id="overall-btn-group">
-            <label class="btn btn-primary">
-              <input type="radio" value="1" name="overall" class="sr-only rd1" required>1</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="2" name="overall" class="sr-only rd2" required>2</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="3" name="overall" class="sr-only rd3" required>3</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="4" name="overall" class="sr-only rd4" required>4</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="5" name="overall" class="sr-only rd5" required>5</label>
-          </div>
-        </div>
-
-        <label>Can you guess if the poetry sample was written by a person?</label>
-        <div data-toggle="buttons">
-          <div class="btn-group" id="turing-btn-group">
-            <label class="btn btn-primary">
-              <input type="radio" value="Computer" name="author" class="sr-only rd1" required>Computer</label>
-            <label class="btn btn-primary">
-              <input type="radio" value="Human" name="author" class="sr-only rd2" required>Human</label>
-          </div>
-        </div>
-
-        <br>
-        <button id="turing-button" class="btn btn-lg btn-primary btn-block">Submit</button>
-      </form>
-
     </div>
-
   </body>
 </html>
