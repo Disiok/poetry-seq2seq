@@ -18,9 +18,8 @@ app.get('/', function (req, res) {
   db.generateTrial().then(function (trial) {
     res.render('turing',
       {
-        "poem": trial.poem,
-        "poem_id": trial.poem_id,
-        "trial_id": trial.trial_id
+        "poem": trial.content,
+        "poem_id": trial._id
       }
     );
   });

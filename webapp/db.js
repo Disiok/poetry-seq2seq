@@ -19,54 +19,48 @@ Poem.find({}).exec(function(error, collection) {
   }
 });
 
-// global variable
-var last_trial_id = 0;
-var trials = {};
+function getPoemCount(type) {
+  return Poem
+    .find({"author": type})
+    .count()
+    .exec();
+}
+
+function getRandomPoem(type) {
+  return getPoemCount(type)
+    .then(function (count) {
+      var random = Math.floor(Math.random() * count);
+      return Poem
+        .find({"author": type})
+        .findOne()
+        .skip(random)
+        .exec();
+    });
+}
 
 function getPoem(type) {
-  var toR = Q.defer();
+  return getRandomPoem(type)
+    .then(function (poem) {
+      var tokens = poem.content.match(/[^，。]+[，。]/g);
+      console.log(tokens);
 
-  Poem
-    .find({"author": type})
-    .count().exec(function(err, count){
-      var random = Math.floor(Math.random() * count);
-      Poem.find({"author": type}).findOne().skip(random).exec(
-        function (err, poem) {
-          var tokens = poem.content.match(/[^，。]+[，。]/g);
-          console.log(tokens);
+      if (tokens) {
+        var lines = tokens.join('<br />')
+        poem.content = lines;
+      } else {
+        console.log('Invalid line tokens.')
+      }
 
-          if (tokens) {
-            var lines = tokens.join('<br />')
-            poem.content = lines;
-          } else {
-            console.log('Invalid line tokens.')
-          }
-
-          toR.resolve(poem);
-        });
-  });
-  return toR.promise;
+      return poem;
+    });
 }
 
 function generateTrial() {
 
-  var types = ['Human', 'Computer']
-  var type = randomChoice(types)
-
-  var trial_id = last_trial_id++;
-
-  trials[trial_id] = {
-    "type": type,
-		"user_responded": false
-  };
-
-  return getPoem(type).then(function (poem) {
-    return {
-      "poem_id": poem._id,
-      "poem": poem.content,
-      "trial_id": trial_id,
-    };
-  });
+  var types = ['Human', 'Computer'];
+  var type = randomChoice(types);
+  
+  return getPoem(type);
 }
 
 function randomChoice(choices) {
@@ -144,24 +138,16 @@ function createRecord(guess) {
 }
 
 function isGuessCorrect(guess) {
-  return Poem.findById(guess.poem).exec().then(function(error, poem) {
-    if (error) {
-      console.log('Cannot find poem with id: ' + guess.poem);
-
-      return false;
-    } else {
-      isCorrect = (poem.author == guess.author);
-      console.log('User guess is ' + (isCorrect? 'correct' : 'incorrect') + '.');
-      console.log('The poem is writte by ' + poem.author + ' but user guessed ' + guess.author + '.');
-      
-      return isCorrect;
-    }
+  return Poem.findById(guess.poem).exec().then(function(poem) {
+    isCorrect = (poem.author == guess.author);
+    console.log('User guess is ' + (isCorrect? 'correct' : 'incorrect') + '.');
+    console.log('The poem is writte by ' + poem.author + ' but user guessed ' + guess.author + '.');
+    return isCorrect;
   });
 }
 
 // exports
 module.exports = {
-	trials,
 	generateTrial,
 	tallyResults,
   createRecord,
