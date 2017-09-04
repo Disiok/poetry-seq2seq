@@ -67,8 +67,6 @@ function generateTrial() {
       "poem_id": poem._id,
       "poem": poem.content,
       "trial_id": trial_id,
-      "poem1sentiment": sentToColor(0.5),
-      "poem1textcolor": textColor(0.5)
     };
   });
 }
@@ -111,36 +109,61 @@ function randomChoice(choices) {
 }
 
 function tallyResults() {
-  var rnnTotal = 0;
-  var humanTotal = 0;
-  var rnnRight = 0;
-  var humanRight = 0;
-  var rnnClickedHuman = 0;
-  var humanClickedHuman = 0;
+  // var rnnTotal = 0;
+  // var humanTotal = 0;
+  // var rnnRight = 0;
+  // var humanRight = 0;
+  // var rnnClickedHuman = 0;
+  // var humanClickedHuman = 0;
 
-  for (var key in trials) {
-    var trial = trials[key];
-    if (!trial.user_responded)
-      continue;
+  // for (var key in trials) {
+  //   var trial = trials[key];
+  //   if (!trial.user_responded)
+  //     continue;
 
-    // fake_poem == true if it is from human
-    if (trial.type == "rnn") {
-      rnnTotal++;
-			if (trial.clicked_human) {
-				rnnClickedHuman++;
-			}
-    } else if (trial.type == "human") {
-      humanTotal++;
-      if (trial.clicked_human) {
-        humanClickedHuman++;
-      }
+  //   // fake_poem == true if it is from human
+  //   if (trial.type == "rnn") {
+  //     rnnTotal++;
+		// 	if (trial.clicked_human) {
+		// 		rnnClickedHuman++;
+		// 	}
+  //   } else if (trial.type == "human") {
+  //     humanTotal++;
+  //     if (trial.clicked_human) {
+  //       humanClickedHuman++;
+  //     }
+  //   }
+  // }
+
+  // return {"rnnTotal": rnnTotal,
+  //   "humanTotal": humanTotal,
+  //   "rnnClickedHuman": rnnClickedHuman,
+  //   "humanClickedHuman": humanClickedHuman};
+
+  var toR = Q.defer();
+
+  data = {
+    'human': {
+      'human guessed': null, 
+      'computer guessed': null,
+    },
+    'computer': {
+      'human guessed': null,
+      'computer guessed': null,
     }
-  }
+  } 
 
-  return {"rnnTotal": rnnTotal,
-    "humanTotal": humanTotal,
-    "rnnClickedHuman": rnnClickedHuman,
-    "humanClickedHuman": humanClickedHuman};
+  Turing.find({}).exec(function(error, collection) {
+    for (var turing of collection) {
+       Poem.findById(turing.poem).exec().then(function (poem) {
+          console.log(poem);
+       });
+      console.log(turing.poem);
+      console.log(turing.author)
+    }
+  });
+
+  return toR.promise;
 }
 
 function createRecord(guess) {

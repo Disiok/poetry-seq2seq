@@ -31,21 +31,14 @@ app.get('/charts', function(req, res) {
 });
 
 app.get('/chartInfo', function(req, res){
-  var results = db.tallyResults();
-  // all added one to avoid render problem in chart
-  results.humanClickedHuman += 1;
-  results.humanTotal += 2;
-  results.rnnClickedHuman += 1;
-  results.rnnTotal += 2;
-  res.send(results);
+  db.tallyResults().then(function (result) {
+    res.send(result);
+  });
 });
 
 app.get('/ajaxGetData', function(req, res){
   db.generateTrial().then(function (trial) {
-    res.send({ "poem": trial.poem,
-      "poem_id": trial.poem_id,
-      "trial_id": trial.trial_id
-    });
+    res.send(trial);
   });
 });
 
