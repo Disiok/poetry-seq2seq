@@ -60,47 +60,13 @@ function generateTrial() {
 		"user_responded": false
   };
 
-  var poem = getPoem(type);
-
-  return poem.then(function (poem) {
+  return getPoem(type).then(function (poem) {
     return {
       "poem_id": poem._id,
       "poem": poem.content,
       "trial_id": trial_id,
     };
   });
-}
-
-function sentToColor(num) {
-  if (num < .25) {
-    return ("#2E3E56");
-  } else if (num > .25 && num < .45) {
-    return ("#174D6B");
-  } else if (num > .45 && num < .55) {
-    return ("#4E8981");
-  } else if (num > .55 && num < .75) {
-    return ("#91C6B2");
-  } else if (num > .75) {
-    return ("#FCEDC9");
-  } else {
-    return ("#FCEDC9");
-  }
-}
-
-function textColor(num) {
-  if (num < .25) {
-    return ("#F2F1EF");
-  } else if (num > .25 && num < .45) {
-    return ("#F2F1EF");
-  } else if (num > .45 && num < .55) {
-    return ("#F2F1EF");
-  } else if (num > .55 && num < .75) {
-    return ("#2E3E56");
-  } else if (num > .75) {
-    return ("#2E3E56");
-  } else {
-    return ("#2E3E56");
-  }
 }
 
 function randomChoice(choices) {
@@ -178,23 +144,19 @@ function createRecord(guess) {
 }
 
 function isGuessCorrect(guess) {
-  var toR = Q.defer();
-
-  Poem.findById(guess.poem).exec(function(error, poem) {
+  return Poem.findById(guess.poem).exec().then(function(error, poem) {
     if (error) {
       console.log('Cannot find poem with id: ' + guess.poem);
 
-      toR.resolve(false);
+      return false;
     } else {
       isCorrect = (poem.author == guess.author);
       console.log('User guess is ' + (isCorrect? 'correct' : 'incorrect') + '.');
       console.log('The poem is writte by ' + poem.author + ' but user guessed ' + guess.author + '.');
       
-      toR.resolve(isCorrect);
+      return isCorrect;
     }
   });
-
-  return toR.promise;
 }
 
 // exports
