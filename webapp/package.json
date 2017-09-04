@@ -11,7 +11,6 @@
   "license": "GPL-3.0",
   "dependencies": {
     "body-parser": "^1.15.0",
-    "chartist": "^0.11.0",
     "express": "^4.13.4",
     "mongoose": "^4.11.8",
     "mustache": "^2.2.1",
