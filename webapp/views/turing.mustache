@@ -41,17 +41,19 @@
       <div class="row align-items-center">
         <!-- Poem Block -->
         <div class="col-md-6" id="card-col">
-          <div class="card text-white bg-dark mb-3 text-center">
+          <div class="card bg-light mb-3 text-center">
             <div class="card-header">
-              <span class="badge badge-light" id="score-indicator">New Session</span>
-              <span id="score"></span>
+              <h3>
+                <span class="badge badge-dark" id="score-indicator">New Session</span>
+                <span id="score"></span>
+              </h3>
             </div>
             <div class="card-body">
-              <h4 class="card-text" id="poem-content" poem_id="{{poem_id}}">
+              <h1 class="card-text" id="poem-content" poem_id="{{poem_id}}">
                 {{{poem}}}
-              </h4>
+              </h1>
               <br />
-              <button class="btn btn-outline-primary" id="skip-button">Skip</button>
+              <button class="btn btn-lg btn-outline-primary" id="skip-button">Skip</button>
             </div>
             <div class="card-footer text-muted">
               <span> Poem ID: </span>
@@ -63,114 +65,106 @@
         <!-- Form Block -->
         <div class="col-md-6">
           <form class="form-rate-poem" id="turing-form" method="post">
-            <div class="row-eq-height">
-              <div class="col-md-6">
-                <label>Readability</label>
+            <div class="form-row">
+              <div class="form-group col">
+                <label class="col-form-label">Readability</label>
                 <div data-toggle="buttons">
                   <div class="btn-group" id="readability-btn-group">
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="1" name="readability" class="sr-only rd1" required>1</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="2" name="readability" class="sr-only rd2" required>2</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="3" name="readability" class="sr-only rd3" required>3</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="4" name="readability" class="sr-only rd4" required>4</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="5" name="readability" class="sr-only rd5" required>5</label>
                   </div>
                 </div>
               </div>
-
-              <div class="col-md-6">
-                <label>Consistency</label>
+              <div class="form-group col">
+                <label class="col-form-label">Consistency</label>
                 <div data-toggle="buttons">
                   <div class="btn-group" id="consistency-btn-group">
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="1" name="consistency" class="sr-only rd1" required>1</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="2" name="consistency" class="sr-only rd2" required>2</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="3" name="consistency" class="sr-only rd3" required>3</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="4" name="consistency" class="sr-only rd4" required>4</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="5" name="consistency" class="sr-only rd5" required>5</label>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div class="row-eq-height">
-              <div class="col-md-6">
-                <label>Poeticness</label>
+            <div class="form-row">
+              <div class="form-group col">
+                <label class="col-form-label">Poeticness</label>
                 <div data-toggle="buttons">
                   <div class="btn-group" id="poeticness-btn-group">
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="1" name="poeticness" class="sr-only rd1" required>1</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="2" name="poeticness" class="sr-only rd2" required>2</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="3" name="poeticness" class="sr-only rd3" required>3</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="4" name="poeticness" class="sr-only rd4" required>4</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="5" name="poeticness" class="sr-only rd5" required>5</label>
                   </div>
                 </div>
               </div>
-
-              <div class="col-md-6">
-                <label>Evocative</label>
+              <div class="form-group col">
+                <label class="col-form-label">Evocative</label>
                 <div data-toggle="buttons">
                   <div class="btn-group" id="evocative-btn-group">
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="1" name="evocative" class="sr-only rd1" required>1</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="2" name="evocative" class="sr-only rd2" required>2</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="3" name="evocative" class="sr-only rd3" required>3</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="4" name="evocative" class="sr-only rd4" required>4</label>
-                    <label class="btn btn-sm btn-outline-primary">
+                    <label class="btn btn-lg btn-outline-primary">
                       <input type="radio" value="5" name="evocative" class="sr-only rd5" required>5</label>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div class="row-eq-height">
-              <label>Overall</label>
-              <div data-toggle="buttons">
-                <div class="btn-group" id="overall-btn-group">
-                  <label class="btn btn-sm btn-outline-primary">
-                    <input type="radio" value="1" name="overall" class="sr-only rd1" required>1</label>
-                  <label class="btn btn-sm btn-outline-primary">
-                    <input type="radio" value="2" name="overall" class="sr-only rd2" required>2</label>
-                  <label class="btn btn-sm btn-outline-primary">
-                    <input type="radio" value="3" name="overall" class="sr-only rd3" required>3</label>
-                  <label class="btn btn-sm btn-outline-primary">
-                    <input type="radio" value="4" name="overall" class="sr-only rd4" required>4</label>
-                  <label class="btn btn-sm btn-outline-primary">
-                    <input type="radio" value="5" name="overall" class="sr-only rd5" required>5</label>
+            <div class="form-group">
+              <label class="col-form-label">Overall</label>
+                <div data-toggle="buttons">
+                  <div class="btn-group" id="overall-btn-group">
+                    <label class="btn btn-lg btn-outline-danger">
+                      <input type="radio" value="1" name="overall" class="sr-only rd1" required>1</label>
+                    <label class="btn btn-lg btn-outline-danger">
+                      <input type="radio" value="2" name="overall" class="sr-only rd2" required>2</label>
+                    <label class="btn btn-lg btn-outline-danger">
+                      <input type="radio" value="3" name="overall" class="sr-only rd3" required>3</label>
+                    <label class="btn btn-lg btn-outline-danger">
+                      <input type="radio" value="4" name="overall" class="sr-only rd4" required>4</label>
+                    <label class="btn btn-lg btn-outline-danger">
+                      <input type="radio" value="5" name="overall" class="sr-only rd5" required>5</label>
+                  </div>
                 </div>
               </div>
-            </div>
-
-
-            <div class="row-eq-height">
-              <label>Who wrote it?</label>
+            <div class="form-group">
+              <label class="col-form-label">Author</label>
               <div data-toggle="buttons">
-                <div class="btn-group" id="turing-btn-group">
-                  <label class="btn btn-outline-secondary">
+                <div class="btn-group" id="turing-btn-group ">
+                  <label class="btn btn-lg btn-outline-info">
                     <input type="radio" value="Computer" name="author" class="sr-only rd1" required>Computer</label>
-                  <label class="btn btn-outline-secondary">
+                  <label class="btn btn-lg btn-outline-warning">
                     <input type="radio" value="Human" name="author" class="sr-only rd2" required>Human</label>
                 </div>
               </div>
             </div>
-
-            <br>
             <button id="turing-button" class="btn btn-lg btn-outline-primary btn-block">Submit</button>
           </form>
         </div>
