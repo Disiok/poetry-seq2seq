@@ -69,61 +69,28 @@ function randomChoice(choices) {
 }
 
 function tallyResults() {
-  // var rnnTotal = 0;
-  // var humanTotal = 0;
-  // var rnnRight = 0;
-  // var humanRight = 0;
-  // var rnnClickedHuman = 0;
-  // var humanClickedHuman = 0;
-
-  // for (var key in trials) {
-  //   var trial = trials[key];
-  //   if (!trial.user_responded)
-  //     continue;
-
-  //   // fake_poem == true if it is from human
-  //   if (trial.type == "rnn") {
-  //     rnnTotal++;
-		// 	if (trial.clicked_human) {
-		// 		rnnClickedHuman++;
-		// 	}
-  //   } else if (trial.type == "human") {
-  //     humanTotal++;
-  //     if (trial.clicked_human) {
-  //       humanClickedHuman++;
-  //     }
-  //   }
-  // }
-
-  // return {"rnnTotal": rnnTotal,
-  //   "humanTotal": humanTotal,
-  //   "rnnClickedHuman": rnnClickedHuman,
-  //   "humanClickedHuman": humanClickedHuman};
-
-  var toR = Q.defer();
-
-  data = {
-    'human': {
-      'human guessed': null, 
-      'computer guessed': null,
-    },
-    'computer': {
-      'human guessed': null,
-      'computer guessed': null,
-    }
-  } 
-
-  Turing.find({}).exec(function(error, collection) {
-    for (var turing of collection) {
-       Poem.findById(turing.poem).exec().then(function (poem) {
-          console.log(poem);
-       });
-      console.log(turing.poem);
-      console.log(turing.author)
-    }
-  });
-
-  return toR.promise;
+  return Turing
+    .find({})
+    .populate('poem')
+    .exec()
+    .then(function (collection) {
+      var data = {
+        'Human': {
+          'Human': 0, 
+          'Computer': 0,
+        },
+        'Computer': {
+          'Human': 0,
+          'Computer': 0,
+        }
+      } 
+      for (var turing of collection) {
+        data[turing.poem.author][turing.author] += 1;
+      }
+      console.log(data);
+      
+      return data;
+    });
 }
 
 function createRecord(guess) {

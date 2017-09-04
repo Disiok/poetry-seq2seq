@@ -1,3 +1,4 @@
+// Global variables
 var humanChart;
 var computerChart;
 
@@ -9,35 +10,48 @@ $(document).ready(function() {
   // Initialize charts
   humanChart = new Chart(humanContext, {
     type: 'pie',
-    data: null
+    data: {
+      datasets: [{
+        data: [],
+        backgroundColor: ['MEDIUMAQUAMARINE', 'LIGHTCORAL']
+      }],
+      labels: [
+        'Correct guess as human',
+        'False guess as computer'
+      ],
+    }
   });
 
   computerChart = new Chart(computerContext, {
     type: 'pie',
-    data: null
+    data: {
+      datasets: [{
+        data: [],
+        backgroundColor: ['LIGHTCORAL', 'MEDIUMAQUAMARINE']
+      }],
+      labels: [
+        'False guess as human',
+        'Correct guess as computer'
+      ]
+    }
   });
 
+  // Update charts
   getTotals();
-  // setInterval(getTotals, 1000);
+  setInterval(getTotals, 1000);
 });
 
 function getTotals() {
   $.ajax({url: "/chartInfo", success: function(result){
+    humanChart.data.datasets[0].data[0] = result['Human']['Human'];
+    humanChart.data.datasets[0].data[1] = result['Human']['Computer'];
 
-    if (humanChart.segments[0].value != result.humanClickedHuman || humanChart.segments[1].value != (result.humanTotal - result.humanClickedHuman))
-    {
-      humanChart.segments[0].value = result.humanClickedHuman;
-      humanChart.segments[1].value = result.humanTotal-result.humanClickedHuman;
-      humanChart.update();
-    }
-    if (rnnChart.segments[0].value != result.rnnClickedHuman || rnnChart.segments[1].value != (result.rnnTotal - result.rnnClickedHuman)) {
-      rnnChart.segments[0].value = result.rnnClickedHuman;
-      rnnChart.segments[1].value = result.rnnTotal-result.rnnClickedHuman;
-      rnnChart.update();
-    }
+    computerChart.data.datasets[0].data[0] = result['Computer']['Human'];
+    computerChart.data.datasets[0].data[1] = result['Computer']['Computer'];
+    
+    humanChart.update();
+    computerChart.update();
 
-
-    console.log(JSON.stringify(result));
     $("#humanP").text(100-(~~((result.humanClickedHuman / result.humanTotal)*100)) + "%");
 
     $("#rnnP").text(100-(~~((result.rnnClickedHuman / result.rnnTotal)*100)) + "%");
