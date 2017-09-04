@@ -7,6 +7,9 @@ $(document).ready(function() {
   var humanContext = $('#human-chart');
   var computerContext = $('#computer-chart');
 
+  var humanRadarContext = $('#human-radar');
+  var computerRadarContext = $('#computer-radar');
+
   // Initialize charts
   humanChart = new Chart(humanContext, {
     type: 'pie',
@@ -33,6 +36,40 @@ $(document).ready(function() {
         'False guess as human',
         'Correct guess as computer'
       ]
+    }
+  });
+
+  humanRadar = new Chart(humanRadarContext, {
+    type: 'radar',
+    data: {
+      labels: [
+        'Readability',
+        'Consistency',
+        'Poeticness',
+        'Evocative',
+        'Overall'
+      ],
+      datasets: [{
+        label: 'Human',
+        data: []
+      }]
+    }
+  });
+
+  computerRadar = new Chart(computerRadarContext, {
+    type: 'radar',
+    data: {
+      labels: [
+        'Readability',
+        'Consistency',
+        'Poeticness',
+        'Evocative',
+        'Overall'
+      ],
+      datasets: [{
+        label: 'Computer',
+        data: []
+      }]
     }
   });
 
