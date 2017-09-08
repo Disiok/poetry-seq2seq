@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
 import json
+
+CHINESE_COMMA = '，'
+CHINESE_PERIOD = '。'
 
 import_files = [
 	{
@@ -28,14 +32,17 @@ def main():
 		file_model = file_config['model']
 
 		with open(file_name) as file:
-			poem_lines = []
-			keyword_lines = []
+			line_index = 0
+			poem_lines = ''
+			keyword_lines = ''
+
 			for line in file:
 				poem_line, keyword_line = line.strip().split('\t')
-				poem_lines.append(poem_line)
-				keyword_lines.append(keyword_line)
+				poem_lines += poem_line + (CHINESE_COMMA if line_index % 2 == 0 else CHINESE_PERIOD)
+				keyword_lines += keyword_line + (CHINESE_PERIOD if line_index % 2 == 0 else CHINESE_PERIOD)
+				line_index += 1
 
-				if len(poem_lines) == len(keyword_lines) == 4:
+				if line_index == 4:
 					poem = {
 						'content': poem_lines,
 						'keyword': keyword_lines,
@@ -44,9 +51,9 @@ def main():
 					}
 
 					documents.append(poem)
-					poem_lines = []
-					keyword_lines = []
-
+					poem_lines = ''
+					keyword_lines = ''
+					line_index = 0 
 
 	with open(output_file_name, 'w+') as output_file:
 		for document in documents:
