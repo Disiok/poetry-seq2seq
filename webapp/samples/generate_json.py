@@ -39,7 +39,7 @@ def main():
 			for line in file:
 				poem_line, keyword_line = line.strip().split('\t')
 				poem_lines += poem_line + (CHINESE_COMMA if line_index % 2 == 0 else CHINESE_PERIOD)
-				keyword_lines += keyword_line + (CHINESE_PERIOD if line_index % 2 == 0 else CHINESE_PERIOD)
+				keyword_lines += keyword_line + (CHINESE_COMMA if line_index % 2 == 0 else CHINESE_PERIOD)
 				line_index += 1
 
 				if line_index == 4:
