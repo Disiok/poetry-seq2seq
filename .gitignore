@@ -8,4 +8,5 @@ log/
 .backup/
 .idea/
 .ipynb_checkpoints/
+.DS_Store
 model*/
