@@ -17,7 +17,7 @@ var PoemSchema = new Schema({
   },
   model: {
   	type: String, 
-  	default: ''
+    required: true
   }
 });
 

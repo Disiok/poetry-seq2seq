@@ -1,5 +1,4 @@
 // includes
-var Q = require("q");
 var P = require('./models/poem');
 var T = require('./models/turing');
 
@@ -76,36 +75,54 @@ function tallyResults() {
     .then(function (collection) {
       var data = {
         'Human': {
-          'Count': 0,
-          'Guess': {
-            'Human': 0, 
-            'Computer': 0,
-          },
-          'Score': {
-            'Readability': 0.0,
-            'Consistency': 0.0,
-            'Poeticness': 0.0,
-            'Evocative': 0.0,
-            'Overall': 0.0
+          'human': {
+            'Count': 0,
+            'Guess': {
+              'Human': 0, 
+              'Computer': 0,
+            },
+            'Score': {
+              'Readability': 0.0,
+              'Consistency': 0.0,
+              'Poeticness': 0.0,
+              'Evocative': 0.0,
+              'Overall': 0.0
+            }
           }
         },
         'Computer': {
-          'Count': 0,
-          'Guess': {
-            'Human': 0, 
-            'Computer': 0,
+          'vrae': {
+            'Count': 0,
+            'Guess': {
+              'Human': 0, 
+              'Computer': 0,
+            },
+            'Score': {
+              'Readability': 0.0,
+              'Consistency': 0.0,
+              'Poeticness': 0.0,
+              'Evocative': 0.0,
+              'Overall': 0.0
+            }
           },
-          'Score': {
-            'Readability': 0.0,
-            'Consistency': 0.0,
-            'Poeticness': 0.0,
-            'Evocative': 0.0,
-            'Overall': 0.0
+          'seq2seq': {
+            'Count': 0,
+            'Guess': {
+              'Human': 0, 
+              'Computer': 0,
+            },
+            'Score': {
+              'Readability': 0.0,
+              'Consistency': 0.0,
+              'Poeticness': 0.0,
+              'Evocative': 0.0,
+              'Overall': 0.0
+            }
           }
         }
       }
       for (var turing of collection) {
-        dataByAuthor = data[turing.poem.author];
+        dataByAuthor = data[turing.poem.author][turing.poem.model];
         dataByAuthor['Count'] += 1;
         dataByAuthor['Guess'][turing.author] += 1;
         dataByAuthor['Score']['Readability'] += turing.readability;
@@ -116,15 +133,19 @@ function tallyResults() {
       }
 
       for (var author of ['Computer', 'Human']) {
-        dataByAuthor = data[author];
-        dataByAuthor['Score']['Readability'] /= dataByAuthor['Count'];
-        dataByAuthor['Score']['Consistency'] /= dataByAuthor['Count'];
-        dataByAuthor['Score']['Poeticness'] /= dataByAuthor['Count'];
-        dataByAuthor['Score']['Evocative'] /= dataByAuthor['Count'];
-        dataByAuthor['Score']['Overall'] /= dataByAuthor['Count'];
+        models_by_author = {
+          'Computer': ['seq2seq', 'vrae'],
+          'Human': ['human']
+        }
+        for (var model of models_by_author[author]) {
+          dataByAuthor = data[author][model];
+          dataByAuthor['Score']['Readability'] /= dataByAuthor['Count'];
+          dataByAuthor['Score']['Consistency'] /= dataByAuthor['Count'];
+          dataByAuthor['Score']['Poeticness'] /= dataByAuthor['Count'];
+          dataByAuthor['Score']['Evocative'] /= dataByAuthor['Count'];
+          dataByAuthor['Score']['Overall'] /= dataByAuthor['Count'];
+        }
       }
-
-      console.log(data);
       
       return data;
     });

@@ -1,7 +1,13 @@
 // Global variables
 var charts;
-var MEDIUMAQUAMARINE = 'rgba(102, 205, 170, 0.5)';
-var LIGHTCORAL = 'rgba(240,128,128, 0.5)';
+var MEDIUMAQUAMARINE = 'rgba(102, 205, 170, 0.5)'
+var LIGHTCORAL = 'rgba(240,128,128, 0.5)'
+var LIGHTBROWN = 'rgba(206, 181, 167, 0.5)'
+
+var models_by_author = {
+  'Computer': ['seq2seq', 'vrae'],
+  'Human': ['human']
+}
 
 
 $(document).ready(function() {
@@ -43,7 +49,12 @@ $(document).ready(function() {
     data: {
       datasets: [{
         data: [],
-        backgroundColor: [LIGHTCORAL, MEDIUMAQUAMARINE]
+        backgroundColor: [LIGHTCORAL, MEDIUMAQUAMARINE],
+        labels: 'Computer: vrae'
+      }, {
+        data: [],
+        backgroundColor: [LIGHTCORAL, MEDIUMAQUAMARINE],
+        labels: 'Computer: seq2seq'
       }],
       labels: [
         'False guess as human',
@@ -83,9 +94,13 @@ $(document).ready(function() {
         'Overall'
       ],
       datasets: [{
-        label: 'Computer',
+        label: 'Computer: vrae',
         data: [],
         backgroundColor: LIGHTCORAL
+      }, {
+        label: 'Computer: seq2seq',
+        data: [],
+        backgroundColor: LIGHTBROWN
       }]
     },
     options: chartOption
@@ -110,16 +125,24 @@ $(document).ready(function() {
 function getTotals() {
   $.ajax({url: "/chartInfo", success: function(result){
     for (var author of ['Computer', 'Human']) {
+      
+
+      models = models_by_author[author]
+
       var pieChart = charts['Guess'][author];
-      var pieData = pieChart.data.datasets[0].data;
-      for (var guessedAuthor of ['Computer', 'Human'].entries()) {
-        pieData[guessedAuthor[0]] = result[author]['Guess'][guessedAuthor[1]];
+      for (var model of models.entries()) {
+        var pieData = pieChart.data.datasets[model[0]].data;
+        for (var guessedAuthor of ['Computer', 'Human'].entries()) {
+          pieData[guessedAuthor[0]] = result[author][model[1]]['Guess'][guessedAuthor[1]];
+        }
       }
 
       var radarChart = charts['Score'][author];
-      var radarData = radarChart.data.datasets[0].data;
-      for (var scoreDimension of ['Readability', 'Consistency', 'Poeticness', 'Evocative', 'Overall'].entries()) {
-        radarData[scoreDimension[0]] = result[author]['Score'][scoreDimension[1]];
+      for (var model of models.entries()) {
+        var radarData = radarChart.data.datasets[model[0]].data;
+        for (var scoreDimension of ['Readability', 'Consistency', 'Poeticness', 'Evocative', 'Overall'].entries()) {
+          radarData[scoreDimension[0]] = result[author][model[1]]['Score'][scoreDimension[1]];
+        }
       }
 
       pieChart.update();
