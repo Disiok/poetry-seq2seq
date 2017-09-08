@@ -130,7 +130,7 @@ function getTotals() {
       var pieChart = charts['Guess'][author];
       for (var [modeInd, model] of models.entries()) {
         var pieData = pieChart.data.datasets[modeInd].data;
-        for (var [guessedAuthorInd, guessedAuthor] of ['Computer', 'Human'].entries()) {
+        for (var [guessedAuthorInd, guessedAuthor] of ['Human', 'Computer'].entries()) {
           pieData[guessedAuthorInd + 2 * modeInd] = result[author][model]['Guess'][guessedAuthor];
         }
       }
